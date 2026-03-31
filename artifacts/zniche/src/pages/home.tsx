@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, useInView } from "framer-motion";
-import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, Users, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
@@ -298,21 +298,21 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-8 py-4">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                <AnimatedCounter target={500} suffix="+" />
+                <AnimatedCounter target={1200} suffix="+" />
               </div>
               <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Products Built</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                <AnimatedCounter target={20} suffix=" min" />
+                <AnimatedCounter target={500} suffix="+" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Avg Build Time</p>
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Creators</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                <AnimatedCounter target={95} suffix="%" />
+                $<AnimatedCounter target={45} suffix="K+" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Creator Satisfaction</p>
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Earned</p>
             </div>
           </div>
         </div>

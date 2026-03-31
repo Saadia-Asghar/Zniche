@@ -11,7 +11,6 @@ import {
   Settings, 
   Trash2, 
   Plus,
-  BarChart3,
   TrendingUp,
   DollarSign,
   Eye

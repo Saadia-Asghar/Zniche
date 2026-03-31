@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { ChevronRight, Home } from "lucide-react";
 
 interface BreadcrumbItem {
