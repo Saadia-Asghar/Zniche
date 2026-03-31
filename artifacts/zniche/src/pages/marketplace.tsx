@@ -184,7 +184,7 @@ export default function Marketplace() {
             >
               <Link href={`/product/${listing.id}`}>
                 <TiltCard>
-                  <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${listing.isFeatured ? "ring-2 ring-accent/40" : ""}`}>
+                  <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${listing.isFeatured ? "featured-gradient-border" : ""}`}>
                     {listing.isFeatured && (
                       <div className="bg-gradient-to-r from-accent/20 to-primary/20 px-3 py-1 text-center">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Featured</span>

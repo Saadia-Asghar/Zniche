@@ -230,6 +230,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
+          <div className="mb-10 max-w-md">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Stay in the loop</p>
+            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+              <input
+                type="email"
+                placeholder="you@email.com"
+                className="flex-1 px-4 py-2 rounded-full bg-muted/30 border border-border/50 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <Button type="submit" className="rounded-full px-5 text-sm">Subscribe</Button>
+            </form>
+          </div>
           <div className="pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
               Built by AI. Owned by you.
