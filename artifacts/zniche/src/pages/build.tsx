@@ -712,8 +712,25 @@ export default function Build() {
           </div>
 
           <div className="bg-card border border-border/50 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold">Share your product</p>
+            <div className="mb-3">
+              <p className="text-sm font-semibold mb-1">Share your story</p>
+              <p className="text-xs text-muted-foreground">Copy the message below or share directly.</p>
+            </div>
+            <div className="bg-muted/30 rounded-xl p-3 mb-4 relative group">
+              <p className="text-sm text-muted-foreground leading-relaxed pr-8">
+                I just built "{finalProduct?.productName}" on Zniche! AI researched the market, wrote my sales page, and set up payments — all in 20 minutes. Check it out: {getShareUrl()}
+              </p>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute top-2 right-2 rounded-full w-7 h-7 opacity-50 group-hover:opacity-100 transition-opacity"
+                onClick={() => copyToClipboard(
+                  `I just built "${finalProduct?.productName}" on Zniche! AI researched the market, wrote my sales page, and set up payments — all in 20 minutes. Check it out: ${getShareUrl()}`,
+                  "Story copied!"
+                )}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
             </div>
             <div className="flex gap-2">
               <a href={shareLinks.twitter} target="_blank" rel="noopener noreferrer" className="flex-1">

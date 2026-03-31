@@ -177,7 +177,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border/50 py-12 md:py-16">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-10">
             <div className="col-span-2 md:col-span-2">
               <Link href="/" className="flex items-center space-x-2 mb-4">
                 <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-bold text-white text-sm">
@@ -220,6 +220,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 ) : (
                   <button onClick={() => login()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors text-left">Log in</button>
                 )}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Resources</p>
+              <div className="space-y-3">
+                <span className="block text-sm text-muted-foreground">Help Center</span>
+                <span className="block text-sm text-muted-foreground">Creator Guide</span>
               </div>
             </div>
             <div>
