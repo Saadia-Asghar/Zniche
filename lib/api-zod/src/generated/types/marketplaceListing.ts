@@ -19,5 +19,7 @@ export interface MarketplaceListing {
   headline?: string | null;
   /** @nullable */
   productFormat?: string | null;
+  isFeatured?: boolean;
+  viewCount?: number;
   createdAt: string;
 }

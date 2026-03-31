@@ -37,5 +37,7 @@ export interface Product {
   creatorFirstName?: string | null;
   /** @nullable */
   marketResearch?: string | null;
+  viewCount?: number;
+  isFeatured?: boolean;
   createdAt: string;
 }

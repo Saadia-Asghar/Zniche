@@ -103,7 +103,7 @@ export default function Dashboard() {
 
   const completedProducts = products.filter(p => p.status === 'completed');
   const totalValue = completedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
-  const totalViews = completedProducts.reduce((sum, p) => sum + ((p as any).viewCount || 0), 0);
+  const totalViews = completedProducts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
   const mockWeeklyData = [3, 5, 2, 8, 6, 4, 7];
 
   return (

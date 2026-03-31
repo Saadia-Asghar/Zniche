@@ -116,6 +116,8 @@ export const GetProductsResponseItem = zod.object({
   marketplaceListed: zod.boolean().optional(),
   creatorFirstName: zod.string().nullish(),
   marketResearch: zod.string().nullish(),
+  viewCount: zod.number().optional(),
+  isFeatured: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 export const GetProductsResponse = zod.array(GetProductsResponseItem);
@@ -162,6 +164,8 @@ export const GetProductResponse = zod.object({
   marketplaceListed: zod.boolean().optional(),
   creatorFirstName: zod.string().nullish(),
   marketResearch: zod.string().nullish(),
+  viewCount: zod.number().optional(),
+  isFeatured: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 
@@ -206,6 +210,8 @@ export const UpdateProductResponse = zod.object({
   marketplaceListed: zod.boolean().optional(),
   creatorFirstName: zod.string().nullish(),
   marketResearch: zod.string().nullish(),
+  viewCount: zod.number().optional(),
+  isFeatured: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 
@@ -238,6 +244,8 @@ export const GetMarketplaceListingsResponseItem = zod.object({
   productDescription: zod.string().nullish(),
   headline: zod.string().nullish(),
   productFormat: zod.string().nullish(),
+  isFeatured: zod.boolean().optional(),
+  viewCount: zod.number().optional(),
   createdAt: zod.string(),
 });
 export const GetMarketplaceListingsResponse = zod.array(

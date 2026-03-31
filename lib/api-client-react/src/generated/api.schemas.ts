@@ -89,6 +89,8 @@ export interface Product {
   creatorFirstName?: string | null;
   /** @nullable */
   marketResearch?: string | null;
+  viewCount?: number;
+  isFeatured?: boolean;
   createdAt: string;
 }
 
@@ -132,6 +134,8 @@ export interface MarketplaceListing {
   headline?: string | null;
   /** @nullable */
   productFormat?: string | null;
+  isFeatured?: boolean;
+  viewCount?: number;
   createdAt: string;
 }
 

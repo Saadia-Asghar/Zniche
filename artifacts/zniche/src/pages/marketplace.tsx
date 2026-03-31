@@ -55,7 +55,7 @@ export default function Marketplace() {
       listing.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.category?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All"
-      || (selectedCategory === "Featured" && (listing as any).isFeatured)
+      || (selectedCategory === "Featured" && listing.isFeatured)
       || (selectedCategory !== "Featured" && listing.category?.toLowerCase() === selectedCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   }).sort((a, b) => {
@@ -184,8 +184,8 @@ export default function Marketplace() {
             >
               <Link href={`/product/${listing.id}`}>
                 <TiltCard>
-                  <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${(listing as any).isFeatured ? "ring-2 ring-accent/40" : ""}`}>
-                    {(listing as any).isFeatured && (
+                  <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${listing.isFeatured ? "ring-2 ring-accent/40" : ""}`}>
+                    {listing.isFeatured && (
                       <div className="bg-gradient-to-r from-accent/20 to-primary/20 px-3 py-1 text-center">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Featured</span>
                       </div>

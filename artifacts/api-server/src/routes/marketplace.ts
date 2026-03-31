@@ -35,6 +35,8 @@ router.get("/marketplace", async (req: Request, res: Response) => {
         productDescription: productsTable.productDescription,
         headline: productsTable.headline,
         productFormat: productsTable.productFormat,
+        isFeatured: productsTable.isFeatured,
+        viewCount: productsTable.viewCount,
         createdAt: productsTable.createdAt,
       })
       .from(productsTable)

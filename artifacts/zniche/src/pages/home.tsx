@@ -248,7 +248,14 @@ export default function Home() {
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">From idea to income in one sitting.</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-1/2 left-[33%] right-[33%] -translate-y-1/2 z-0">
+              <div className="flex items-center justify-between px-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-primary/40 to-accent/40" />
+                <ArrowRight className="w-4 h-4 text-accent/40 mx-1" />
+                <div className="flex-1 h-px bg-gradient-to-r from-accent/40 to-green-400/40" />
+              </div>
+            </div>
             {[
               {
                 icon: <Zap className="w-7 h-7" />,
@@ -278,6 +285,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}
+                className="relative z-10"
               >
                 <Card className="glass-card h-full group hover:scale-[1.02] transition-all duration-300">
                   <CardContent className="pt-7 pb-6 flex flex-col items-center text-center relative">

@@ -3,8 +3,15 @@ import { useState } from "react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X, Zap, ArrowRight, Bell } from "lucide-react";
+import { Moon, Sun, Menu, X, Zap, ArrowRight, Bell, LayoutDashboard, LogOut, Twitter, Github, Linkedin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, login, logout } = useAuth();
@@ -62,17 +69,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <Bell className="w-4 h-4" />
                     <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
                   </Button>
-                  <Link href="/dashboard">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-white">
-                        {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
-                      </div>
-                      <span className="text-sm font-medium">{user.firstName || user.username}</span>
-                    </div>
-                  </Link>
-                  <Button variant="ghost" className="rounded-full text-sm" onClick={() => logout()} data-testid="button-logout">
-                    Log out
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer" data-testid="button-user-menu">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-white">
+                          {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
+                        </div>
+                        <span className="text-sm font-medium">{user.firstName || user.username}</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                          <LayoutDashboard className="w-4 h-4" /> Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 cursor-pointer" data-testid="button-logout">
+                        <LogOut className="w-4 h-4" /> Log out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Link href="/build">
                     <Button className="rounded-full px-6 gap-1" data-testid="button-start-building">
                       <Zap className="w-4 h-4" /> Build
@@ -160,8 +177,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border/50 py-12 md:py-16">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-            <div className="col-span-2 md:col-span-1">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+            <div className="col-span-2 md:col-span-2">
               <Link href="/" className="flex items-center space-x-2 mb-4">
                 <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-bold text-white text-sm">
                   Z
@@ -170,9 +187,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   Zni<span className="text-primary">che</span>
                 </span>
               </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Turn your skills into income. AI builds your product in 20 minutes.
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-xs">
+                Turn your skills into income. AI builds your product, page, and payment in 20 minutes.
               </p>
+              <div className="flex items-center gap-3">
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors">
+                  <Twitter className="w-3.5 h-3.5" />
+                </a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors">
+                  <Github className="w-3.5 h-3.5" />
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors">
+                  <Linkedin className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Product</p>
@@ -182,22 +210,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Account</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Company</p>
               <div className="space-y-3">
                 {user ? (
                   <>
                     <Link href="/dashboard" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
-                    <button onClick={() => logout()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Log out</button>
+                    <button onClick={() => logout()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors text-left">Log out</button>
                   </>
                 ) : (
-                  <button onClick={() => login()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Log in</button>
+                  <button onClick={() => login()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors text-left">Log in</button>
                 )}
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">More</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Legal</p>
               <div className="space-y-3">
-                <Link href="/admin" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Admin</Link>
+                <span className="block text-sm text-muted-foreground">Privacy Policy</span>
+                <span className="block text-sm text-muted-foreground">Terms of Service</span>
               </div>
             </div>
           </div>

@@ -462,6 +462,10 @@ components:
           type: [string, 'null']
         marketResearch:
           type: [string, 'null']
+        viewCount:
+          type: integer
+        isFeatured:
+          type: boolean
         createdAt:
           type: string
 
@@ -530,6 +534,10 @@ components:
           type: [string, 'null']
         productFormat:
           type: [string, 'null']
+        isFeatured:
+          type: boolean
+        viewCount:
+          type: integer
         createdAt:
           type: string
 
