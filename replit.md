@@ -26,7 +26,19 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **Vertical timeline**: Build feed uses left-side vertical timeline
 - **Masonry layout**: Marketplace uses CSS columns masonry (2/3/4 responsive)
 - **Micro-animations**: 250ms ease-out transitions on state changes
-- **3D Product Covers**: Three.js rotating box with category-based colors, IntersectionObserver for perf
+- **3D Product Covers**: Pure CSS 3D transforms (perspective, rotateY, backface-hidden) with category-colored gradients and shine sweep — no WebGL/Three.js
+- **Glass-morphism**: `glass-card` class with backdrop-filter blur + translucent borders for cards throughout
+- **Floating shapes**: CSS animated decorative shapes in hero (animate-float, animate-float-alt keyframes)
+- **Animated counters**: Stats bar with counting-up numbers on scroll (useInView trigger)
+- **Testimonials**: Creator testimonials section with star ratings on homepage
+- **Grid/List toggle**: Marketplace supports grid and list view modes
+- **FAQ accordion**: Product page includes collapsible FAQ section
+- **Trust badges**: Product page shows money-back guarantee, secure payment, verified creator badges
+- **Circular progress ring**: Build page shows SVG ring with percentage during build
+- **Parallax hero**: Product page hero has scroll-based parallax background elements
+- **Multi-column footer**: 4-column footer layout (brand, product, account, more)
+- **Animated mobile menu**: Framer Motion slide-down mobile nav instead of dropdown
+- **Custom scrollbar**: Styled scrollbar matching dark theme
 - **Confetti**: canvas-confetti on verification pass and build completion
 
 ## Stack
@@ -46,7 +58,7 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **Payments**: Stripe Checkout
 - **Animations**: Framer Motion
 - **Theme**: next-themes (dark/light toggle)
-- **3D**: Three.js (product cover component)
+- **3D Covers**: Pure CSS 3D transforms (no WebGL dependency)
 - **Confetti**: canvas-confetti
 
 ## Structure
@@ -68,10 +80,10 @@ artifacts-monorepo/
 
 ## Pages
 
-- `/` — Dark hero with typewriter skill cycling, live build feed mini-preview, 3-step explainer, 3D product covers on listings
-- `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed (7 steps, left timeline + right streaming panel) → celebration screen with confetti, 3D cover, social sharing
-- `/marketplace` — Masonry layout with 3D product covers, category filter pills, stat cards, search
-- `/product/:id` — Full sales page with 3D cover, reviews section, star ratings (no navbar/footer for conversion focus)
+- `/` — Dark hero with gradient "earn" text, typewriter skill cycling, floating CSS shapes, live build feed glass card, 3-step explainer, animated stats counter bar, testimonials section, CTA bottom section
+- `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed with circular SVG progress ring (7 steps, left timeline + right streaming panel) → celebration screen with confetti, CSS 3D cover, social sharing
+- `/marketplace` — Glass-morphism cards with grid/list toggle, CSS 3D product covers, category filter pills, stat cards, search, sort
+- `/product/:id` — Parallax hero, glass-card content area, CSS 3D cover, trust badges, FAQ accordion, reviews section, shine-effect Buy Now button (no navbar/footer for conversion focus)
 - `/dashboard` — Creator dashboard with products (auth required)
 - `/admin` — Admin panel (password: "zniche-admin")
 

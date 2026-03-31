@@ -478,10 +478,34 @@ export default function Build() {
   }
 
   if (phase === "building") {
+    const completedSteps = BUILD_STEPS.filter((_, i) => getStepStatus(i) === "done").length;
+    const progressPct = (completedSteps / BUILD_STEPS.length) * 100;
+    const circumference = 2 * Math.PI * 54;
+    const dashOffset = circumference - (progressPct / 100) * circumference;
+
     return (
       <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row">
         <div className="w-full lg:w-80 xl:w-96 border-r border-border/50 bg-card/30 p-6 lg:p-8 flex-shrink-0">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">Build Progress</p>
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Build Progress</p>
+            <div className="relative w-16 h-16">
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="hsl(var(--border))" strokeWidth="6" />
+                <circle
+                  cx="60" cy="60" r="54" fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={dashOffset}
+                  className="transition-all duration-700 ease-out"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                {Math.round(progressPct)}%
+              </span>
+            </div>
+          </div>
           <div className="space-y-1">
             {BUILD_STEPS.map((step, i) => {
               const stepStat = getStepStatus(i);

@@ -1,11 +1,11 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2 } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, Users, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
 import { ProductCover3D } from "@/components/product-cover-3d";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const SKILL_EXAMPLES = [
   "Arabic tutor",
@@ -49,6 +49,31 @@ function TypewriterText() {
   );
 }
 
+function AnimatedCounter({ target, suffix = "", prefix = "" }: { target: number; suffix?: string; prefix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (!isInView) return;
+    let start = 0;
+    const duration = 1500;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [isInView, target]);
+
+  return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>;
+}
+
 const FEED_STEPS = [
   { icon: Search, label: "Market demand scan", status: "done" as const },
   { icon: Lightbulb, label: "Product concept...", status: "live" as const },
@@ -69,7 +94,7 @@ function MiniBuildFeed() {
   }, []);
 
   return (
-    <div className="bg-card border border-border/50 rounded-2xl p-5 w-full max-w-sm shadow-xl">
+    <div className="glass-card rounded-2xl p-5 w-full max-w-sm shadow-xl">
       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4 font-medium">Live Build Feed</p>
       <div className="space-y-3">
         {FEED_STEPS.map((step, i) => {
@@ -101,6 +126,12 @@ function MiniBuildFeed() {
   );
 }
 
+const TESTIMONIALS = [
+  { name: "Sarah K.", role: "Fitness Coach", text: "Built my meal plan product in 15 minutes. Made my first sale the same day.", rating: 5 },
+  { name: "Marcus T.", role: "Excel Tutor", text: "I was skeptical, but the AI nailed my sales page. Way better than I could write.", rating: 5 },
+  { name: "Priya D.", role: "Designer", text: "The verification quiz was surprisingly smart. Felt like the platform actually cares about quality.", rating: 5 },
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
@@ -124,6 +155,10 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-[10%] w-16 h-16 rounded-2xl bg-primary/10 animate-float opacity-30 rotate-12" />
+          <div className="absolute top-40 right-[15%] w-12 h-12 rounded-full bg-neon-mint/10 animate-float-alt opacity-30" />
+          <div className="absolute bottom-20 left-[20%] w-10 h-10 rounded-xl bg-zniche-red/10 animate-float opacity-20 -rotate-12" />
+          <div className="absolute top-[60%] right-[8%] w-14 h-14 rounded-lg bg-primary/8 animate-float-alt opacity-20 rotate-45" />
         </div>
         <div className="container relative z-10 mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -133,20 +168,21 @@ export default function Home() {
               variants={staggerContainer}
               className="flex flex-col"
             >
-              <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-                Skill &rarr; Product &rarr; Income
-              </motion.p>
+              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6 bg-card/50 border border-border/50 rounded-full px-4 py-2 w-fit">
+                <span className="w-2 h-2 rounded-full bg-neon-mint animate-pulse" />
+                AI-powered skill monetization
+              </motion.div>
 
               <motion.h1 
                 variants={fadeUp}
                 className="text-4xl md:text-6xl font-extrabold tracking-[-0.04em] mb-6 leading-[1.1]"
               >
                 Turn what you know<br />
-                into what you earn.
+                into what you <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">earn</span>.
               </motion.h1>
               
-              <motion.p variants={fadeUp} className="text-lg md:text-xl text-muted-foreground mb-3">
-                No website. No agency. No months of work. AI builds your product, page, and payment in 20 minutes &mdash; live, in front of you.
+              <motion.p variants={fadeUp} className="text-lg md:text-xl text-muted-foreground mb-3 max-w-lg">
+                No website. No agency. No months of work. AI builds your product, page, and payment in 20 minutes.
               </motion.p>
 
               <motion.div variants={fadeUp} className="text-xl md:text-2xl font-semibold mb-8">
@@ -179,7 +215,32 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 px-4 border-t border-border/30">
+      <section className="py-4 border-t border-b border-border/30 bg-card/30">
+        <div className="container mx-auto max-w-4xl px-4">
+          <div className="grid grid-cols-3 gap-8 py-4">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
+                <AnimatedCounter target={500} suffix="+" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Products Built</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
+                <AnimatedCounter target={20} suffix=" min" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Avg Build Time</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
+                <AnimatedCounter target={95} suffix="%" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Creator Satisfaction</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] mb-3">Three steps. Twenty minutes.</h2>
@@ -192,30 +253,42 @@ export default function Home() {
                 icon: <Zap className="w-7 h-7" />,
                 color: "text-primary bg-primary/10",
                 title: "Describe your skill",
-                desc: "Tell us what you know in one sentence. Set your hours and price."
+                desc: "Tell us what you know in one sentence. Set your hours and price.",
+                step: "01"
               },
               {
                 icon: <Globe className="w-7 h-7" />,
                 color: "text-neon-mint bg-neon-mint/10",
                 title: "Watch AI build it live",
-                desc: "Our engine researches the market, writes copy, and builds your sales page."
+                desc: "Our engine researches the market, writes copy, and builds your sales page.",
+                step: "02"
               },
               {
                 icon: <Banknote className="w-7 h-7" />,
                 color: "text-green-400 bg-green-500/10",
                 title: "Launch & earn",
-                desc: "Get a Stripe checkout link and marketplace listing instantly."
+                desc: "Get a Stripe checkout link and marketplace listing instantly.",
+                step: "03"
               }
             ].map((step, i) => (
-              <Card key={i} className="border-border/30 bg-card/50 backdrop-blur hover:border-primary/20 transition-all group">
-                <CardContent className="pt-7 pb-6 flex flex-col items-center text-center">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center mb-5 ${step.color}`}>
-                    {step.icon}
-                  </div>
-                  <h3 className="text-lg font-bold mb-2 tracking-tight">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.15 }}
+              >
+                <Card className="glass-card h-full group hover:scale-[1.02] transition-all duration-300">
+                  <CardContent className="pt-7 pb-6 flex flex-col items-center text-center relative">
+                    <span className="absolute top-4 right-4 text-5xl font-extrabold text-muted-foreground/5">{step.step}</span>
+                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center mb-5 ${step.color}`}>
+                      {step.icon}
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 tracking-tight">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -237,38 +310,46 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {previewListings.length > 0 ? (
-              previewListings.map(listing => (
-                <Card key={listing.id} className="overflow-hidden group hover:border-primary/30 transition-all cursor-pointer border-border/30">
-                  <Link href={`/product/${listing.id}`}>
-                    <CardContent className="p-0">
-                      <div className="flex items-center justify-center py-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-                        <ProductCover3D
-                          productName={listing.productName || "Product"}
-                          category={listing.category}
-                          width={200}
-                          height={140}
-                        />
-                      </div>
-                      <div className="p-5">
-                        <div className="flex justify-between items-start mb-3">
-                          <span className="text-xs font-medium px-2.5 py-1 bg-primary/10 text-primary rounded-full">
-                            {listing.category || 'Skill'}
-                          </span>
-                          <span className="font-bold text-lg">${listing.price}</span>
+              previewListings.map((listing, i) => (
+                <motion.div
+                  key={listing.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                >
+                  <Card className="glass-card overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all duration-300">
+                    <Link href={`/product/${listing.id}`}>
+                      <CardContent className="p-0">
+                        <div className="flex items-center justify-center py-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                          <ProductCover3D
+                            productName={listing.productName || "Product"}
+                            category={listing.category}
+                            width={200}
+                            height={140}
+                          />
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                          {listing.headline || listing.productDescription || "An amazing micro-product."}
-                        </p>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center mr-2 text-xs font-bold text-primary">
-                            {listing.creatorFirstName?.charAt(0) || "U"}
+                        <div className="p-5">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="text-xs font-medium px-2.5 py-1 bg-primary/10 text-primary rounded-full">
+                              {listing.category || 'Skill'}
+                            </span>
+                            <span className="font-bold text-lg">${listing.price}</span>
                           </div>
-                          {listing.creatorFirstName || "Creator"}
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {listing.headline || listing.productDescription || "An amazing micro-product."}
+                          </p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center mr-2 text-xs font-bold text-primary">
+                              {listing.creatorFirstName?.charAt(0) || "U"}
+                            </div>
+                            {listing.creatorFirstName || "Creator"}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
+                      </CardContent>
+                    </Link>
+                  </Card>
+                </motion.div>
               ))
             ) : (
               <div className="col-span-full text-center py-16 text-muted-foreground border border-dashed border-border/50 rounded-2xl">
@@ -277,6 +358,65 @@ export default function Home() {
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4 border-t border-border/30">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] mb-3">Loved by creators</h2>
+            <p className="text-muted-foreground text-lg">Join hundreds of experts already earning with Zniche.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
+                  <div className="flex gap-0.5 mb-4">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={`w-4 h-4 ${s <= t.rating ? "fill-accent text-accent" : "text-muted-foreground/20"}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-4">"{t.text}"</p>
+                  <div className="flex items-center gap-3 pt-4 border-t border-border/30">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4 border-t border-border/30">
+        <div className="container mx-auto max-w-3xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-[-0.04em] mb-4">Ready to turn your skill into income?</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
+              It's free to start. No credit card required. Build your first product in under 20 minutes.
+            </p>
+            <Link href="/build">
+              <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-lg hover:shadow-primary/25 transition-all">
+                Start building now <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>

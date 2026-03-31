@@ -1,22 +1,29 @@
-import { useRef, useEffect, useState } from "react";
-import * as THREE from "three";
+import { useState } from "react";
 
-const CATEGORY_COLORS: Record<string, number> = {
-  education: 0x5B2EFF,
-  design: 0xFF5A70,
-  fitness: 0x00F0A0,
-  tech: 0x0099FF,
-  food: 0xFFB347,
-  coaching: 0x5B2EFF,
-  consulting: 0x0099FF,
-  courses: 0x5B2EFF,
-  templates: 0xFF5A70,
-  "digital guides": 0x00F0A0,
-  "live sessions": 0xFFB347,
-  default: 0x5B2EFF,
+const CATEGORY_COLORS: Record<string, { from: string; to: string }> = {
+  education: { from: "#5B2EFF", to: "#8B6FFF" },
+  design: { from: "#FF5A70", to: "#FF8FA0" },
+  fitness: { from: "#00F0A0", to: "#00C080" },
+  tech: { from: "#0099FF", to: "#33BBFF" },
+  food: { from: "#FFB347", to: "#FFD080" },
+  coaching: { from: "#5B2EFF", to: "#9B7FFF" },
+  consulting: { from: "#0099FF", to: "#4DC4FF" },
+  courses: { from: "#5B2EFF", to: "#7B5EFF" },
+  templates: { from: "#FF5A70", to: "#FF8090" },
+  "digital guides": { from: "#00F0A0", to: "#33FFB0" },
+  "live sessions": { from: "#FFB347", to: "#FFCC80" },
+  "tech & software": { from: "#0099FF", to: "#33BBFF" },
+  "writing & content": { from: "#FF5A70", to: "#FF8FA0" },
+  "design & creative": { from: "#FF5A70", to: "#FF8FA0" },
+  "business & coaching": { from: "#5B2EFF", to: "#8B6FFF" },
+  "arts & media": { from: "#FFB347", to: "#FFD080" },
+  "education & tutoring": { from: "#00F0A0", to: "#33FFB0" },
+  "finance & money": { from: "#0099FF", to: "#4DC4FF" },
+  "health & wellness": { from: "#00F0A0", to: "#00C080" },
+  default: { from: "#5B2EFF", to: "#8B6FFF" },
 };
 
-function getCategoryColor(category?: string | null): number {
+function getCategoryColors(category?: string | null) {
   if (!category) return CATEGORY_COLORS.default;
   const key = category.toLowerCase();
   return CATEGORY_COLORS[key] || CATEGORY_COLORS.default;
@@ -37,134 +44,98 @@ export function ProductCover3D({
   height = 220,
   className = "",
 }: ProductCover3DProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const hoverRef = useRef(false);
+  const colors = getCategoryColors(category);
 
-  useEffect(() => {
-    hoverRef.current = isHovered;
-  }, [isHovered]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let isVisible = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => { isVisible = entry.isIntersecting; },
-      { threshold: 0.1 }
-    );
-    observer.observe(container);
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
-    camera.position.set(0, 0.3, 3.5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    const color = getCategoryColor(category);
-
-    const geometry = new THREE.BoxGeometry(2.2, 1.4, 0.15, 4, 4, 1);
-    const material = new THREE.MeshStandardMaterial({
-      color,
-      metalness: 0.3,
-      roughness: 0.4,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = 0.15;
-    scene.add(mesh);
-
-    const edgeGeo = new THREE.EdgesGeometry(geometry);
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08 });
-    const edges = new THREE.LineSegments(edgeGeo, edgeMat);
-    mesh.add(edges);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "rgba(255,255,255,0.0)";
-    ctx.fillRect(0, 0, 512, 256);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 32px Inter, Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    const words = productName.split(" ");
-    const lines: string[] = [];
-    let currentLine = "";
-    for (const word of words) {
-      const test = currentLine ? `${currentLine} ${word}` : word;
-      if (ctx.measureText(test).width > 440) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = test;
-      }
-    }
-    if (currentLine) lines.push(currentLine);
-
-    const lineHeight = 40;
-    const startY = 128 - ((lines.length - 1) * lineHeight) / 2;
-    lines.forEach((line, i) => {
-      ctx.fillText(line, 256, startY + i * lineHeight);
-    });
-
-    const texture = new THREE.CanvasTexture(canvas);
-    const labelMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-    const labelGeo = new THREE.PlaneGeometry(2.1, 1.05);
-    const label = new THREE.Mesh(labelGeo, labelMat);
-    label.position.z = 0.08;
-    mesh.add(label);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(2, 3, 4);
-    scene.add(dirLight);
-
-    const rimLight = new THREE.DirectionalLight(color, 0.3);
-    rimLight.position.set(-2, -1, -2);
-    scene.add(rimLight);
-
-    let animId: number;
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      if (!isVisible) return;
-      const speed = hoverRef.current ? 0.02 : 0.008;
-      mesh.rotation.y += speed;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(animId);
-      renderer.dispose();
-      geometry.dispose();
-      material.dispose();
-      edgeGeo.dispose();
-      edgeMat.dispose();
-      labelGeo.dispose();
-      labelMat.dispose();
-      texture.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-    };
-  }, [productName, category, width, height]);
+  const truncatedName = productName.length > 50
+    ? productName.slice(0, 47) + "..."
+    : productName;
 
   return (
     <div
-      ref={containerRef}
       className={`flex items-center justify-center ${className}`}
-      style={{ width, height }}
+      style={{ width, height, perspective: "800px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-    />
+    >
+      <div
+        className="relative transition-transform duration-700 ease-out"
+        style={{
+          width: width * 0.75,
+          height: height * 0.7,
+          transformStyle: "preserve-3d",
+          animation: isHovered ? "cover-spin-fast 4s linear infinite" : "cover-spin 12s linear infinite",
+        }}
+      >
+        <div
+          className="absolute inset-0 rounded-xl flex items-center justify-center p-4 backface-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+            boxShadow: `0 8px 32px ${colors.from}40, inset 0 1px 0 rgba(255,255,255,0.2)`,
+            transform: "rotateY(0deg) translateZ(8px)",
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <div className="text-center">
+            <p className="text-white font-bold text-sm leading-tight drop-shadow-md"
+              style={{ fontSize: Math.max(11, Math.min(16, width / 18)) }}
+            >
+              {truncatedName}
+            </p>
+            {category && (
+              <p className="text-white/60 text-[10px] mt-2 uppercase tracking-widest font-medium">
+                {category}
+              </p>
+            )}
+          </div>
+          <div
+            className="absolute inset-0 rounded-xl opacity-30"
+            style={{
+              background: "linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)",
+              animation: "shine-sweep 3s ease-in-out infinite",
+            }}
+          />
+        </div>
+
+        <div
+          className="absolute inset-0 rounded-xl backface-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${colors.to}, ${colors.from})`,
+            boxShadow: `0 8px 32px ${colors.from}40`,
+            transform: "rotateY(180deg) translateZ(8px)",
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center">
+              <span className="text-white/80 text-2xl font-bold">Z</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="absolute rounded-xl"
+          style={{
+            width: "16px",
+            height: "100%",
+            background: `linear-gradient(to bottom, ${colors.from}CC, ${colors.to}CC)`,
+            transform: "rotateY(90deg) translateZ(" + (width * 0.75 / 2 - 8) + "px)",
+            left: "calc(50% - 8px)",
+            top: 0,
+          }}
+        />
+        <div
+          className="absolute rounded-xl"
+          style={{
+            width: "16px",
+            height: "100%",
+            background: `linear-gradient(to bottom, ${colors.to}CC, ${colors.from}CC)`,
+            transform: "rotateY(-90deg) translateZ(" + (width * 0.75 / 2 - 8) + "px)",
+            left: "calc(50% - 8px)",
+            top: 0,
+          }}
+        />
+      </div>
+    </div>
   );
 }

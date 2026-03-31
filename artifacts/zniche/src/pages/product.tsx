@@ -1,7 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, Shield, Clock, Star, ArrowRight, ArrowLeft, Send } from "lucide-react";
+import { Check, Shield, Clock, Star, ArrowRight, ArrowLeft, Send, ChevronDown, Sparkles, Lock, Award } from "lucide-react";
 import { useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,31 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
           key={i}
           className={`${dim} ${i <= rating ? "fill-accent text-accent" : "text-muted-foreground/30"}`}
         />
+      ))}
+    </div>
+  );
+}
+
+function FAQAccordion({ items }: { items: { q: string; a: string }[] }) {
+  const [open, setOpen] = useState<number | null>(null);
+
+  return (
+    <div className="space-y-2">
+      {items.map((item, i) => (
+        <div key={i} className="border border-border/50 rounded-xl overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition-colors"
+            onClick={() => setOpen(open === i ? null : i)}
+          >
+            <span className="text-sm font-semibold pr-4">{item.q}</span>
+            <ChevronDown className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 ${open === i ? "rotate-180" : ""}`} />
+          </button>
+          <div
+            className={`overflow-hidden transition-all duration-300 ${open === i ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -84,7 +109,7 @@ function ReviewSection({ productId }: { productId: string }) {
         )}
       </div>
 
-      <form onSubmit={submitReview} className="mb-8 bg-muted/20 rounded-xl border border-border/50 p-5 space-y-4">
+      <form onSubmit={submitReview} className="mb-8 glass-card rounded-xl p-5 space-y-4">
         <p className="text-sm font-semibold">Leave a review</p>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map(i => (
@@ -127,7 +152,7 @@ function ReviewSection({ productId }: { productId: string }) {
       ) : (
         <div className="space-y-4">
           {reviews.map(review => (
-            <div key={review.id} className="p-4 bg-card rounded-xl border border-border/50">
+            <div key={review.id} className="p-4 glass-card rounded-xl">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
@@ -157,6 +182,13 @@ function ReviewSection({ productId }: { productId: string }) {
 
 export default function Product() {
   const { id } = useParams();
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handler = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
 
   const { data: product, isLoading, error } = useGetProduct(id || "", {
     query: { enabled: !!id, queryKey: getGetProductQueryKey(id || ""), retry: false }
@@ -194,16 +226,40 @@ export default function Product() {
     );
   }
 
+  const faqItems = [
+    { q: "What exactly do I get?", a: "You receive full access to the digital product, including all materials, guides, and templates. Everything is available immediately after purchase." },
+    { q: "Is there a refund policy?", a: "If you're not satisfied, reach out within 7 days and we'll work with you to make it right." },
+    { q: "How do I access my purchase?", a: "After checkout via Stripe, you'll receive instant access via email. No accounts or downloads needed." },
+    { q: "Who created this?", a: `This was created by ${product.creatorFirstName || "a verified creator"} who spends ${product.hoursPerWeek || "several"} hours per week mastering this craft.` },
+  ];
+
   return (
     <div className="bg-background min-h-screen pb-20">
-      <div className="bg-muted/30 pt-16 pb-24 px-4 border-b">
-        <div className="container max-w-5xl mx-auto">
+      <div
+        className="relative pt-16 pb-24 px-4 border-b overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, hsl(var(--muted) / 0.4), hsl(var(--background)))",
+        }}
+      >
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{ transform: `translateY(${scrollY * 0.15}px)` }}
+        >
+          <div className="absolute top-10 left-[10%] w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
+          <div className="absolute bottom-10 right-[15%] w-40 h-40 bg-accent/5 rounded-full blur-2xl" />
+        </div>
+
+        <div className="container max-w-5xl mx-auto relative z-10">
           <Link href="/marketplace" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Marketplace
           </Link>
 
           <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <div className="flex items-center gap-3 mb-6">
                 <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-md">
                   {product.category || 'Skill Service'}
@@ -225,24 +281,27 @@ export default function Product() {
 
               <div className="flex items-center gap-4 text-sm font-medium">
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-accent text-accent" />
-                  <Star className="w-5 h-5 fill-accent text-accent" />
-                  <Star className="w-5 h-5 fill-accent text-accent" />
-                  <Star className="w-5 h-5 fill-accent text-accent" />
-                  <Star className="w-5 h-5 fill-accent text-accent" />
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className="w-5 h-5 fill-accent text-accent" />
+                  ))}
                 </div>
                 <span className="text-muted-foreground">5.0 · Verified Creator</span>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex justify-center"
+            >
               <ProductCover3D
                 productName={product.productName || "Product"}
                 category={product.category}
                 width={340}
                 height={250}
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -250,7 +309,7 @@ export default function Product() {
       <div className="container max-w-5xl mx-auto px-4 -mt-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
 
-          <div className="md:col-span-2 space-y-12 bg-card p-8 md:p-10 rounded-2xl border shadow-sm">
+          <div className="md:col-span-2 space-y-12 glass-card p-8 md:p-10 rounded-2xl">
 
             <section>
               <h3 className="text-2xl font-bold mb-6">About this product</h3>
@@ -259,8 +318,10 @@ export default function Product() {
               </div>
             </section>
 
-            <section className="bg-secondary/30 p-8 rounded-xl border border-secondary/50">
-              <h3 className="text-xl font-bold mb-6">What you'll get</h3>
+            <section className="bg-gradient-to-br from-primary/5 to-accent/5 p-8 rounded-xl border border-primary/10">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" /> What you'll get
+              </h3>
               <ul className="space-y-4">
                 {[
                   "Complete access to the materials",
@@ -276,6 +337,19 @@ export default function Product() {
               </ul>
             </section>
 
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { icon: Shield, label: "Money-back guarantee", color: "text-neon-mint" },
+                { icon: Lock, label: "Secure payment", color: "text-primary" },
+                { icon: Award, label: "Verified creator", color: "text-accent" },
+              ].map((badge, i) => (
+                <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl border border-border/30">
+                  <badge.icon className={`w-6 h-6 ${badge.color} mb-2`} />
+                  <span className="text-xs text-muted-foreground font-medium">{badge.label}</span>
+                </div>
+              ))}
+            </div>
+
             <section>
               <h3 className="text-2xl font-bold mb-6">Meet your creator</h3>
               <div className="flex items-center gap-6">
@@ -289,19 +363,24 @@ export default function Product() {
               </div>
             </section>
 
+            <section>
+              <h3 className="text-2xl font-bold mb-6">Frequently Asked</h3>
+              <FAQAccordion items={faqItems} />
+            </section>
+
             <ReviewSection productId={id || ""} />
           </div>
 
           <div className="md:col-span-1">
-            <div className="sticky top-24 bg-card rounded-2xl border shadow-xl overflow-hidden">
+            <div className="sticky top-24 glass-card rounded-2xl shadow-xl overflow-hidden">
               <div className="h-2 bg-gradient-to-r from-primary to-accent w-full" />
               <div className="p-8">
                 <div className="text-4xl font-extrabold mb-2">${product.price}</div>
-                <p className="text-sm text-muted-foreground mb-8 pb-8 border-b">One-time payment. Secure checkout.</p>
+                <p className="text-sm text-muted-foreground mb-8 pb-8 border-b border-border/30">One-time payment. Secure checkout.</p>
 
                 <Button
                   size="lg"
-                  className="w-full h-14 text-lg mb-4 shadow-md hover:shadow-primary/20 transition-all font-bold gap-2"
+                  className="w-full h-14 text-lg mb-4 shadow-md hover:shadow-primary/20 transition-all font-bold gap-2 relative overflow-hidden group"
                   onClick={() => {
                     if (product.stripeCheckoutUrl) {
                       window.location.href = product.stripeCheckoutUrl;
@@ -309,7 +388,10 @@ export default function Product() {
                   }}
                   disabled={!product.stripeCheckoutUrl}
                 >
-                  Buy Now <ArrowRight className="w-5 h-5" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Buy Now <ArrowRight className="w-5 h-5" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 </Button>
 
                 {!product.stripeCheckoutUrl && (

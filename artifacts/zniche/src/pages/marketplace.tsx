@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, TrendingUp, Users, DollarSign } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, Users, DollarSign, LayoutGrid, LayoutList } from "lucide-react";
 import { useGetMarketplaceListings, useGetMarketplaceStats } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { data: listings = [], isLoading } = useGetMarketplaceListings();
   const { data: stats, isLoading: isLoadingStats } = useGetMarketplaceStats();
@@ -41,45 +42,40 @@ export default function Marketplace() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-10">
-      <div className="mb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-10"
+      >
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-[-0.04em] mb-2">Marketplace</h1>
         <p className="text-muted-foreground text-lg">Discover skills and micro-products from top creators.</p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-3 gap-4 mb-10">
-        <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-xl text-primary">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Products</p>
-            <div className="text-2xl font-bold">
-              {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : stats?.totalProducts || 0}
+        {[
+          { icon: TrendingUp, label: "Products", value: stats?.totalProducts || 0, color: "text-primary bg-primary/10" },
+          { icon: Users, label: "Creators", value: stats?.totalCreators || 0, color: "text-neon-mint bg-neon-mint/10" },
+          { icon: DollarSign, label: "Avg Price", value: `$${Math.round(Number(stats?.avgPrice) || 0)}`, color: "text-green-500 bg-green-500/10" },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: i * 0.1 }}
+            className="glass-card rounded-2xl p-5 flex items-center gap-4"
+          >
+            <div className={`p-3 rounded-xl ${stat.color}`}>
+              <stat.icon className="w-5 h-5" />
             </div>
-          </div>
-        </div>
-        <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-neon-mint/10 rounded-xl text-neon-mint">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creators</p>
-            <div className="text-2xl font-bold">
-              {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : stats?.totalCreators || 0}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+              <div className="text-2xl font-bold">
+                {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : stat.value}
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-green-500/10 rounded-xl text-green-500">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Avg Price</p>
-            <div className="text-2xl font-bold">
-              {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : `$${Math.round(Number(stats?.avgPrice) || 0)}`}
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        ))}
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-4">
@@ -103,6 +99,24 @@ export default function Marketplace() {
             <SelectItem value="price-desc">Price: High</SelectItem>
           </SelectContent>
         </Select>
+        <div className="hidden md:flex border border-border/50 rounded-full overflow-hidden">
+          <Button
+            variant={viewMode === "grid" ? "default" : "ghost"}
+            size="icon"
+            className="rounded-none h-11 w-11"
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "ghost"}
+            size="icon"
+            className="rounded-none h-11 w-11"
+            onClick={() => setViewMode("list")}
+          >
+            <LayoutList className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-8 flex-wrap">
@@ -120,11 +134,9 @@ export default function Marketplace() {
       </div>
 
       {isLoading ? (
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="break-inside-avoid">
-              <Skeleton className={`w-full rounded-2xl ${i % 3 === 0 ? 'h-72' : i % 3 === 1 ? 'h-56' : 'h-64'}`} />
-            </div>
+            <Skeleton key={i} className="h-64 rounded-2xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -136,46 +148,80 @@ export default function Marketplace() {
             <Button className="rounded-full px-6">Create the first one</Button>
           </Link>
         </div>
-      ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((listing, i) => (
             <motion.div
               key={listing.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="break-inside-avoid"
             >
               <Link href={`/product/${listing.id}`}>
-                <Card className="overflow-hidden group hover:border-primary/30 transition-all cursor-pointer border-border/30 bg-card/50">
-                  <CardContent className="p-0">
-                    <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-                      <ProductCover3D
-                        productName={listing.productName || "Product"}
-                        category={listing.category}
-                        width={220}
-                        height={160}
-                      />
+                <div className="glass-card rounded-2xl overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all duration-300">
+                  <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                    <ProductCover3D
+                      productName={listing.productName || "Product"}
+                      category={listing.category}
+                      width={220}
+                      height={160}
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                        {listing.category || 'Skill'}
+                      </span>
+                      <span className="font-bold">${listing.price}</span>
                     </div>
-                    <div className="p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                          {listing.category || 'Skill'}
-                        </span>
-                        <span className="font-bold">${listing.price}</span>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                      {listing.headline || listing.productDescription || "A unique micro-product."}
+                    </p>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">
+                        {listing.creatorFirstName?.charAt(0) || "U"}
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                        {listing.headline || listing.productDescription || "A unique micro-product."}
-                      </p>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">
-                          {listing.creatorFirstName?.charAt(0) || "U"}
-                        </div>
-                        {listing.creatorFirstName || "Creator"}
-                      </div>
+                      {listing.creatorFirstName || "Creator"}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((listing, i) => (
+            <motion.div
+              key={listing.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.03 }}
+            >
+              <Link href={`/product/${listing.id}`}>
+                <div className="glass-card rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.005] transition-all duration-300 flex items-center gap-4 p-4">
+                  <div className="flex-shrink-0">
+                    <ProductCover3D
+                      productName={listing.productName || "Product"}
+                      category={listing.category}
+                      width={120}
+                      height={80}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                        {listing.category || 'Skill'}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold truncate">{listing.productName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{listing.headline || listing.productDescription}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-lg font-bold">${listing.price}</p>
+                    <p className="text-xs text-muted-foreground">{listing.creatorFirstName || "Creator"}</p>
+                  </div>
+                </div>
               </Link>
             </motion.div>
           ))}

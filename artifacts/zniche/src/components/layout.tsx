@@ -1,19 +1,16 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { Moon, Sun, Menu, X, Zap, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, login, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [location] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isProductPage = location.startsWith("/product/");
 
@@ -36,11 +33,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </span>
             </Link>
             <nav className="hidden md:flex gap-6">
-              <Link href="/marketplace" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+              <Link href="/marketplace" className={`text-sm font-medium transition-colors hover:text-primary ${location === "/marketplace" ? "text-primary" : "text-muted-foreground"}`}>
                 Marketplace
               </Link>
               {user && (
-                <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+                <Link href="/dashboard" className={`text-sm font-medium transition-colors hover:text-primary ${location === "/dashboard" ? "text-primary" : "text-muted-foreground"}`}>
                   Dashboard
                 </Link>
               )}
@@ -61,11 +58,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <>
-                  <Button variant="ghost" className="rounded-full" onClick={() => logout()} data-testid="button-logout">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                      {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
+                    </div>
+                    <span className="text-sm font-medium">{user.firstName || user.username}</span>
+                  </div>
+                  <Button variant="ghost" className="rounded-full text-sm" onClick={() => logout()} data-testid="button-logout">
                     Log out
                   </Button>
                   <Link href="/build">
-                    <Button className="rounded-full px-6" data-testid="button-start-building">Build Product</Button>
+                    <Button className="rounded-full px-6 gap-1" data-testid="button-start-building">
+                      <Zap className="w-4 h-4" /> Build
+                    </Button>
                   </Link>
                 </>
               ) : (
@@ -74,54 +79,129 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Log in
                   </Button>
                   <Link href="/build">
-                    <Button className="rounded-full px-6" data-testid="button-start-building">Start Building</Button>
+                    <Button className="rounded-full px-6 gap-1" data-testid="button-start-building">
+                      <Zap className="w-4 h-4" /> Start Building
+                    </Button>
                   </Link>
                 </>
               )}
             </div>
 
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <Link href="/marketplace">
-                    <DropdownMenuItem>Marketplace</DropdownMenuItem>
-                  </Link>
-                  {user && (
-                    <Link href="/dashboard">
-                      <DropdownMenuItem>Dashboard</DropdownMenuItem>
-                    </Link>
-                  )}
-                  <Link href="/build">
-                    <DropdownMenuItem className="font-semibold text-primary">Start Building</DropdownMenuItem>
-                  </Link>
-                  {user ? (
-                    <DropdownMenuItem onClick={() => logout()}>Log out</DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={() => login()}>Log in</DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden rounded-full"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="md:hidden border-t border-border/50 overflow-hidden"
+            >
+              <div className="px-4 py-4 space-y-2 bg-card/80 backdrop-blur-lg">
+                <Link href="/marketplace" onClick={() => setMobileOpen(false)}>
+                  <div className="px-4 py-3 rounded-xl hover:bg-muted/50 text-sm font-medium transition-colors">
+                    Marketplace
+                  </div>
+                </Link>
+                {user && (
+                  <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <div className="px-4 py-3 rounded-xl hover:bg-muted/50 text-sm font-medium transition-colors">
+                      Dashboard
+                    </div>
+                  </Link>
+                )}
+                <Link href="/build" onClick={() => setMobileOpen(false)}>
+                  <div className="px-4 py-3 rounded-xl bg-primary/10 text-primary text-sm font-semibold flex items-center gap-2">
+                    <Zap className="w-4 h-4" /> Start Building <ArrowRight className="w-4 h-4 ml-auto" />
+                  </div>
+                </Link>
+                <div className="pt-2 border-t border-border/30">
+                  {user ? (
+                    <button
+                      onClick={() => { logout(); setMobileOpen(false); }}
+                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-muted/50 text-sm text-muted-foreground transition-colors"
+                    >
+                      Log out
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { login(); setMobileOpen(false); }}
+                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-muted/50 text-sm font-medium transition-colors"
+                    >
+                      Log in
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="flex-1 flex flex-col relative w-full h-full">
         {children}
       </main>
 
-      <footer className="border-t border-border/50 py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row px-4 md:px-8 mx-auto">
-          <p className="text-sm leading-loose text-center text-muted-foreground md:text-left">
-            Built by AI. Owned by you.
-          </p>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/admin" className="hover:underline">Admin</Link>
+      <footer className="border-t border-border/50 py-12 md:py-16">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            <div className="col-span-2 md:col-span-1">
+              <Link href="/" className="flex items-center space-x-2 mb-4">
+                <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-bold text-white text-sm">
+                  Z
+                </div>
+                <span className="font-bold text-lg tracking-[-0.04em]">
+                  Zni<span className="text-primary">che</span>
+                </span>
+              </Link>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Turn your skills into income. AI builds your product in 20 minutes.
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Product</p>
+              <div className="space-y-3">
+                <Link href="/build" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Start Building</Link>
+                <Link href="/marketplace" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Account</p>
+              <div className="space-y-3">
+                {user ? (
+                  <>
+                    <Link href="/dashboard" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
+                    <button onClick={() => logout()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Log out</button>
+                  </>
+                ) : (
+                  <button onClick={() => login()} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Log in</button>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">More</p>
+              <div className="space-y-3">
+                <Link href="/admin" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Admin</Link>
+              </div>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              Built by AI. Owned by you.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} Zniche. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
