@@ -76,7 +76,7 @@ export default function Marketplace() {
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Avg Price</p>
             <div className="text-2xl font-bold">
-              {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : `$${stats?.avgPrice?.toFixed(0) || '0'}`}
+              {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : `$${Math.round(Number(stats?.avgPrice) || 0)}`}
             </div>
           </div>
         </div>
