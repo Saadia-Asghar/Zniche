@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Zniche"
+version = "1.0.0"
+id = "artifacts/zniche"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21632
+
+[services.development]
+run = "pnpm --filter @workspace/zniche run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/zniche", "run", "build" ]
+publicDir = "artifacts/zniche/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21632"
+BASE_PATH = "/"

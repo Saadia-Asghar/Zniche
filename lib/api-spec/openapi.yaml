@@ -1,15 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Zniche API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: products
+    description: Product management
+  - name: marketplace
+    description: Marketplace listings
+  - name: ai
+    description: AI generation endpoints
+  - name: stripe
+    description: Stripe payment endpoints
 paths:
   /healthz:
     get:
@@ -24,7 +33,317 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to returnTo path.
+
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  /products:
+    get:
+      operationId: getProducts
+      tags: [products]
+      summary: Get all products for the authenticated user
+      responses:
+        "200":
+          description: List of user products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductBody"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductBody"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccess"
+
+  /marketplace:
+    get:
+      operationId: getMarketplaceListings
+      tags: [marketplace]
+      summary: Get all marketplace listings
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+      responses:
+        "200":
+          description: Marketplace listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketplaceListing"
+
+  /marketplace/stats:
+    get:
+      operationId: getMarketplaceStats
+      tags: [marketplace]
+      summary: Get marketplace statistics
+      responses:
+        "200":
+          description: Marketplace stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceStats"
+
+  /stripe/create-checkout:
+    post:
+      operationId: createStripeCheckout
+      tags: [stripe]
+      summary: Create a Stripe checkout session for a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutBody"
+      responses:
+        "200":
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /ai/build:
+    post:
+      operationId: startAiBuild
+      tags: [ai]
+      summary: Start AI product build (SSE streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiBuildRequest"
+      responses:
+        "200":
+          description: SSE stream of build steps
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +353,230 @@ components:
       required:
         - status
 
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Product:
+      type: object
+      required: [id, userId, skill, hoursPerWeek, price, status, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        skill:
+          type: string
+        hoursPerWeek:
+          type: integer
+        price:
+          type: number
+        status:
+          type: string
+          enum: [building, completed, failed]
+        productName:
+          type: [string, 'null']
+        productDescription:
+          type: [string, 'null']
+        productFormat:
+          type: [string, 'null']
+        category:
+          type: [string, 'null']
+        headline:
+          type: [string, 'null']
+        salesCopy:
+          type: [string, 'null']
+        socialCaptions:
+          type: [string, 'null']
+        stripeCheckoutUrl:
+          type: [string, 'null']
+        stripeProductId:
+          type: [string, 'null']
+        marketplaceListed:
+          type: boolean
+        creatorFirstName:
+          type: [string, 'null']
+        marketResearch:
+          type: [string, 'null']
+        createdAt:
+          type: string
+
+    CreateProductBody:
+      type: object
+      required: [skill, hoursPerWeek, price]
+      properties:
+        skill:
+          type: string
+          minLength: 1
+        hoursPerWeek:
+          type: integer
+          minimum: 1
+        price:
+          type: number
+          minimum: 5
+          maximum: 500
+
+    UpdateProductBody:
+      type: object
+      properties:
+        productName:
+          type: string
+        productDescription:
+          type: string
+        headline:
+          type: string
+        salesCopy:
+          type: string
+        stripeCheckoutUrl:
+          type: string
+        stripeProductId:
+          type: string
+        marketplaceListed:
+          type: boolean
+        status:
+          type: string
+        category:
+          type: string
+        productFormat:
+          type: string
+        socialCaptions:
+          type: string
+        marketResearch:
+          type: string
+
+    MarketplaceListing:
+      type: object
+      required: [id, productName, category, price, creatorFirstName, stripeCheckoutUrl, createdAt]
+      properties:
+        id:
+          type: string
+        productName:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        creatorFirstName:
+          type: string
+        stripeCheckoutUrl:
+          type: string
+        productDescription:
+          type: [string, 'null']
+        headline:
+          type: [string, 'null']
+        productFormat:
+          type: [string, 'null']
+        createdAt:
+          type: string
+
+    MarketplaceStats:
+      type: object
+      required: [totalProducts, totalCreators, avgPrice]
+      properties:
+        totalProducts:
+          type: integer
+        totalCreators:
+          type: integer
+        avgPrice:
+          type: number
+        topCategories:
+          type: array
+          items:
+            type: object
+            required: [category, count]
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+
+    CreateCheckoutBody:
+      type: object
+      required: [productId]
+      properties:
+        productId:
+          type: string
+
+    CheckoutResponse:
+      type: object
+      required: [checkoutUrl]
+      properties:
+        checkoutUrl:
+          type: string
+
+    AiBuildRequest:
+      type: object
+      required: [productId, skill, hoursPerWeek, price]
+      properties:
+        productId:
+          type: string
+        skill:
+          type: string
+        hoursPerWeek:
+          type: integer
+        price:
+          type: number

@@ -1,0 +1,89 @@
+Now let me design the brand and build the full prompt + visual identity.## The brand: **Zniche** *(zee-niche)*
+
+Completely original name. Not in the market. Not trademarked in tech. The name fuses "zone" + "niche" — your specific zone of expertise turned into income. The teal accent dot in the logo represents the "drop" — your skill dropping into the market and paying off.
+
+---
+
+Now here is your complete, copy-paste Replit Agent 4 prompt:
+
+---
+
+## 🚀 Full Replit Agent 4 Build Prompt
+
+Paste this **word for word** into Replit Agent 4:
+
+---
+
+> Build a full-stack web application called **Zniche** (tagline: "Your skill. Your product. Your income. — in 20 minutes."). This is a skill-to-income marketplace powered by AI.
+>
+> **Brand & Design System:**
+> Primary color: #7C5CFC (Spark Purple). Accent color: #23F0C7 (Mint Drop). Background dark: #0D0D0D. Background light: #F5F2FF. Font: Inter or system-sans. Logo: a capital "Z" lettermark with a mint green accent dot. The UI must feel premium, modern, dark-first with a light mode toggle. No generic template look — custom card styles, animated step feeds, smooth transitions.
+>
+> **Core User Flow:**
+>
+> Step 1 — Onboarding form (3 questions only):
+> - "What are you good at? Describe your skill in one sentence."
+> - "How many hours per week can you dedicate?"
+> - "What price feels fair for your knowledge? ($5–$500)"
+>
+> Step 2 — Live AI Build Feed (the hero moment):
+> After form submission, show an animated step-by-step feed on screen. Each step lights up with a status dot (pending = gray, active = purple pulse, done = mint checkmark). Steps:
+> 1. Researching market demand for your skill (uses web search)
+> 2. Generating your micro-product concept
+> 3. Writing your sales copy and pricing
+> 4. Building your live sales page
+> 5. Creating your Stripe payment link
+> 6. Writing 5 social media captions
+> 7. Adding your product to the Zniche marketplace
+>
+> Step 3 — Results Dashboard:
+> Show the user: their live product URL, their Stripe checkout link, their 5 social captions (copyable), and a "Your product is live" celebration screen with confetti animation.
+>
+> **AI Integration (Anthropic API):**
+> Use the Anthropic Claude API (claude-sonnet-4-20250514, max_tokens: 2000) for all AI steps. Enable the web_search tool for Step 1 (market research). For each step, make a separate API call and stream the result to the UI. Prompt structure:
+> - Step 1 prompt: "Search the internet and tell me: is there demand for someone who [user skill]? What would people pay for it? Give me 3 data points. Be concise."
+> - Step 2 prompt: "Based on this skill: [user skill], available [hours] hours/week, target price $[price] — design ONE specific micro-product concept. Name it. Describe it in 2 sentences. Format: Product Name: / Description: / Format: (PDF / 3 sessions / course / template)"
+> - Step 3 prompt: "Write a complete sales page for this product: [product concept]. Include: headline, subheadline, 3 bullet point benefits, social proof placeholder, and a CTA button text. Keep it punchy and human."
+> - Step 6 prompt: "Write 5 short social media captions (Twitter/LinkedIn/WhatsApp) to launch this product: [product concept]. Each caption under 280 chars. Make them feel real, not salesy."
+>
+> **Marketplace Page (/marketplace):**
+> A public page showing all products created on Zniche as cards. Each card shows: product name, skill category tag (color-coded), price, creator first name, and a "Buy Now" button linking to their Stripe checkout. Filter by category. Sort by newest/price. This is the viral engine — every creator shares their marketplace listing link.
+>
+> **Tech Stack:**
+> - Frontend: React + Tailwind CSS
+> - Backend: Node.js + Express
+> - Database: PostgreSQL with Drizzle ORM (tables: users, products, marketplace_listings)
+> - Auth: Replit Auth
+> - Payments: Stripe Checkout (create a checkout session per product)
+> - AI: Anthropic API with streaming responses
+> - Deployment: Replit (live URL on replit.app subdomain)
+>
+> **Additional Pages:**
+> - Landing page (/) with hero section, how-it-works (3 steps), real marketplace listings preview, and CTA
+> - User dashboard (/dashboard) showing all their created products, earnings, and edit options
+> - Individual product page (/product/[id]) — the shareable sales page with Stripe buy button
+> - Admin panel (/admin) — password protected, shows all users, products, total GMV
+>
+> **Key UX details:**
+> - The AI build feed must animate in real time as each API call completes — not all at once
+> - Each completed step should show a mint green checkmark and the actual AI output below it (collapsed by default, expandable)
+> - Mobile-first responsive design
+> - Page load under 2 seconds
+> - Toast notifications for copy actions ("Caption copied!")
+> - Error handling: if AI step fails, show retry button for that step only
+>
+> **Make the product feel alive.** This is not a form + result page. It is a live, cinematic experience of watching AI build your business. Every transition, every step reveal, every checkmark should feel intentional and satisfying.
+
+---
+
+## After you build it — Week 2 checkpoint submission:
+
+Record a 60-second Loom video of yourself:
+1. Typing *"I teach Urdu to beginners online"* into the form
+2. Watching the 7 steps animate live
+3. Showing the finished live product page with Stripe button
+4. Showing the marketplace with your listing on it
+
+Post it on LinkedIn/X tagging **@Replit** with the caption: *"I built a skill-to-income marketplace in 48 hours using Agent 4. Anyone can turn their knowledge into a product in 20 minutes. Here's mine live 👇 #Agent4Buildathon"*
+
+That single post locks in your marketing score. Want me to write the full social caption too?
