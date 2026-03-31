@@ -40,6 +40,14 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **Animated mobile menu**: Framer Motion slide-down mobile nav instead of dropdown
 - **Custom scrollbar**: Styled scrollbar matching dark theme
 - **Confetti**: canvas-confetti on verification pass and build completion
+- **Step particle burst**: Small confetti burst on each build step completion (not just final)
+- **Route transitions**: Framer Motion AnimatePresence page transition animations between routes
+- **Breadcrumb navigation**: Home icon + chevron trail on marketplace, dashboard, product pages
+- **Notification bell**: Bell icon with green dot indicator in navbar (when logged in)
+- **Creator gradient-ring avatar**: Gradient border ring on creator avatar (product page) + "Verified Creator" badge
+- **Dashboard mini charts**: Animated bar charts in stat cards, AnimatedCounter for numbers
+- **Featured cards**: Marketplace cards with accent ring + Featured banner for isFeatured products
+- **ErrorBoundary**: All ProductCover3D instances wrapped in ErrorBoundary for graceful fallback
 
 ## Stack
 
@@ -84,7 +92,7 @@ artifacts-monorepo/
 - `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed with circular SVG progress ring (7 steps, left timeline + right streaming panel) → celebration screen with confetti, CSS 3D cover, social sharing
 - `/marketplace` — Glass-morphism cards with grid/list toggle, CSS 3D product covers, category filter pills, stat cards, search, sort
 - `/product/:id` — Parallax hero, glass-card content area, CSS 3D cover, trust badges, FAQ accordion, reviews section, shine-effect Buy Now button (no navbar/footer for conversion focus)
-- `/dashboard` — Creator dashboard with products (auth required)
+- `/dashboard` — Creator dashboard with animated stat counters, mini bar charts, glass-card product list (auth required)
 - `/admin` — Admin panel (password: "zniche-admin")
 
 ## Database Schema

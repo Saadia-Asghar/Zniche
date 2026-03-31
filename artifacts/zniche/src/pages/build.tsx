@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { ProductCover3D } from "@/components/product-cover-3d";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const formSchema = z.object({
   skill: z.string().min(10, "Please provide more detail about your skill."),
@@ -92,15 +93,30 @@ export default function Build() {
     }
   }, [stepOutputs, currentStep]);
 
+  const fireStepBurst = useCallback(() => {
+    confetti({
+      particleCount: 15,
+      spread: 40,
+      origin: { x: 0.15, y: 0.5 },
+      colors: ["#5B2EFF", "#00F0A0"],
+      scalar: 0.6,
+      gravity: 0.8,
+      ticks: 60,
+    });
+  }, []);
+
   const fireCelebration = useCallback(() => {
-    const duration = 2000;
+    const duration = 3000;
     const end = Date.now() + duration;
     const frame = () => {
-      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
-      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
+      confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
+      confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
       if (Date.now() < end) requestAnimationFrame(frame);
     };
     frame();
+    setTimeout(() => {
+      confetti({ particleCount: 100, spread: 100, origin: { y: 0.4 }, colors: ["#5B2EFF", "#00F0A0", "#FFD700"] });
+    }, 500);
   }, []);
 
   const onFormSubmit = async (values: FormValues) => {
@@ -200,6 +216,9 @@ export default function Build() {
               }
 
               if (event.step) {
+                if (event.step > currentStep) {
+                  fireStepBurst();
+                }
                 setCurrentStep(event.step);
                 if (event.output) {
                   setStepOutputs(prev => ({ ...prev, [event.step!]: event.output || "" }));
@@ -658,12 +677,14 @@ export default function Build() {
 
         {finalProduct?.productName && (
           <div className="flex justify-center mb-8">
-            <ProductCover3D
-              productName={finalProduct.productName}
-              category={finalProduct.category}
-              width={300}
-              height={220}
-            />
+            <ErrorBoundary>
+              <ProductCover3D
+                productName={finalProduct.productName}
+                category={finalProduct.category}
+                width={300}
+                height={220}
+              />
+            </ErrorBoundary>
           </div>
         )}
 

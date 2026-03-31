@@ -6,6 +6,8 @@ import { useGetProduct, getGetProductQueryKey } from "@workspace/api-client-reac
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCover3D } from "@/components/product-cover-3d";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Breadcrumb } from "@/components/breadcrumb";
 
 interface Review {
   id: string;
@@ -250,9 +252,10 @@ export default function Product() {
         </div>
 
         <div className="container max-w-5xl mx-auto relative z-10">
-          <Link href="/marketplace" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Marketplace
-          </Link>
+          <Breadcrumb items={[
+            { label: "Marketplace", href: "/marketplace" },
+            { label: product.productName || "Product" },
+          ]} />
 
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <motion.div
@@ -295,12 +298,14 @@ export default function Product() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="flex justify-center"
             >
-              <ProductCover3D
-                productName={product.productName || "Product"}
-                category={product.category}
-                width={340}
-                height={250}
-              />
+              <ErrorBoundary>
+                <ProductCover3D
+                  productName={product.productName || "Product"}
+                  category={product.category}
+                  width={340}
+                  height={250}
+                />
+              </ErrorBoundary>
             </motion.div>
           </div>
         </div>
@@ -353,12 +358,18 @@ export default function Product() {
             <section>
               <h3 className="text-2xl font-bold mb-6">Meet your creator</h3>
               <div className="flex items-center gap-6">
-                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
-                  {product.creatorFirstName?.charAt(0) || "U"}
+                <div className="w-[88px] h-[88px] rounded-full p-1 bg-gradient-to-br from-primary via-accent to-primary flex-shrink-0">
+                  <div className="w-full h-full rounded-full bg-card flex items-center justify-center text-2xl font-bold text-primary">
+                    {product.creatorFirstName?.charAt(0) || "U"}
+                  </div>
                 </div>
                 <div>
                   <h4 className="text-xl font-bold">{product.creatorFirstName || "Expert Creator"}</h4>
                   <p className="text-muted-foreground">Spends {product.hoursPerWeek} hrs/week mastering this craft.</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Award className="w-4 h-4 text-accent" />
+                    <span className="text-xs text-accent font-semibold">Verified Creator</span>
+                  </div>
                 </div>
               </div>
             </section>

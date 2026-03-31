@@ -1,8 +1,9 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AnimatePresence, motion } from "framer-motion";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 
@@ -15,18 +16,37 @@ import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient();
 
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 function Router() {
   return (
     <Layout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/build" component={Build} />
-        <Route path="/marketplace" component={Marketplace} />
-        <Route path="/product/:id" component={Product} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/admin" component={Admin} />
-        <Route component={NotFound} />
-      </Switch>
+      <PageTransition>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/build" component={Build} />
+          <Route path="/marketplace" component={Marketplace} />
+          <Route path="/product/:id" component={Product} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/admin" component={Admin} />
+          <Route component={NotFound} />
+        </Switch>
+      </PageTransition>
     </Layout>
   );
 }

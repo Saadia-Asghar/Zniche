@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X, Zap, ArrowRight } from "lucide-react";
+import { Moon, Sun, Menu, X, Zap, ArrowRight, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -58,12 +58,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                      {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
+                  <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Notifications">
+                    <Bell className="w-4 h-4" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+                  </Button>
+                  <Link href="/dashboard">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-white">
+                        {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
+                      </div>
+                      <span className="text-sm font-medium">{user.firstName || user.username}</span>
                     </div>
-                    <span className="text-sm font-medium">{user.firstName || user.username}</span>
-                  </div>
+                  </Link>
                   <Button variant="ghost" className="rounded-full text-sm" onClick={() => logout()} data-testid="button-logout">
                     Log out
                   </Button>

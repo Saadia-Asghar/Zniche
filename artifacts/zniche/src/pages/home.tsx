@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
 import { ProductCover3D } from "@/components/product-cover-3d";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useState, useEffect, useRef } from "react";
 
 const SKILL_EXAMPLES = [
@@ -322,12 +323,14 @@ export default function Home() {
                     <Link href={`/product/${listing.id}`}>
                       <CardContent className="p-0">
                         <div className="flex items-center justify-center py-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-                          <ProductCover3D
-                            productName={listing.productName || "Product"}
-                            category={listing.category}
-                            width={200}
-                            height={140}
-                          />
+                          <ErrorBoundary>
+                            <ProductCover3D
+                              productName={listing.productName || "Product"}
+                              category={listing.category}
+                              width={200}
+                              height={140}
+                            />
+                          </ErrorBoundary>
                         </div>
                         <div className="p-5">
                           <div className="flex justify-between items-start mb-3">

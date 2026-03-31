@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal, TrendingUp, Users, DollarSign, LayoutGrid, LayoutList } from "lucide-react";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCover3D } from "@/components/product-cover-3d";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Breadcrumb } from "@/components/breadcrumb";
 import {
   Select,
   SelectContent,
@@ -16,7 +18,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CATEGORIES = ["All", "Digital guides", "Live sessions", "Templates", "Courses", "Consulting", "Coaching"];
+const CATEGORIES = ["All", "Featured", "Digital guides", "Live sessions", "Templates", "Courses", "Consulting", "Coaching"];
+
+function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) scale(1.02)`;
+  };
+  const handleMouseLeave = () => {
+    if (ref.current) ref.current.style.transform = "";
+  };
+  return (
+    <div ref={ref} className={`transition-transform duration-300 ease-out ${className}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+      {children}
+    </div>
+  );
+}
 
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,7 +54,9 @@ export default function Marketplace() {
       listing.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.category?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || listing.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCategory = selectedCategory === "All"
+      || (selectedCategory === "Featured" && (listing as any).isFeatured)
+      || (selectedCategory !== "Featured" && listing.category?.toLowerCase() === selectedCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   }).sort((a, b) => {
     if (sortBy === "price-asc") return Number(a.price) - Number(b.price);
@@ -42,6 +66,7 @@ export default function Marketplace() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-10">
+      <Breadcrumb items={[{ label: "Marketplace" }]} />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -158,33 +183,42 @@ export default function Marketplace() {
               transition={{ duration: 0.3, delay: i * 0.05 }}
             >
               <Link href={`/product/${listing.id}`}>
-                <div className="glass-card rounded-2xl overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all duration-300">
-                  <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-                    <ProductCover3D
-                      productName={listing.productName || "Product"}
-                      category={listing.category}
-                      width={220}
-                      height={160}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                        {listing.category || 'Skill'}
-                      </span>
-                      <span className="font-bold">${listing.price}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                      {listing.headline || listing.productDescription || "A unique micro-product."}
-                    </p>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">
-                        {listing.creatorFirstName?.charAt(0) || "U"}
+                <TiltCard>
+                  <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${(listing as any).isFeatured ? "ring-2 ring-accent/40" : ""}`}>
+                    {(listing as any).isFeatured && (
+                      <div className="bg-gradient-to-r from-accent/20 to-primary/20 px-3 py-1 text-center">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Featured</span>
                       </div>
-                      {listing.creatorFirstName || "Creator"}
+                    )}
+                    <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                      <ErrorBoundary>
+                        <ProductCover3D
+                          productName={listing.productName || "Product"}
+                          category={listing.category}
+                          width={220}
+                          height={160}
+                        />
+                      </ErrorBoundary>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                          {listing.category || 'Skill'}
+                        </span>
+                        <span className="font-bold">${listing.price}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                        {listing.headline || listing.productDescription || "A unique micro-product."}
+                      </p>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">
+                          {listing.creatorFirstName?.charAt(0) || "U"}
+                        </div>
+                        {listing.creatorFirstName || "Creator"}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </TiltCard>
               </Link>
             </motion.div>
           ))}
@@ -201,12 +235,14 @@ export default function Marketplace() {
               <Link href={`/product/${listing.id}`}>
                 <div className="glass-card rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.005] transition-all duration-300 flex items-center gap-4 p-4">
                   <div className="flex-shrink-0">
-                    <ProductCover3D
-                      productName={listing.productName || "Product"}
-                      category={listing.category}
-                      width={120}
-                      height={80}
-                    />
+                    <ErrorBoundary>
+                      <ProductCover3D
+                        productName={listing.productName || "Product"}
+                        category={listing.category}
+                        width={120}
+                        height={80}
+                      />
+                    </ErrorBoundary>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
