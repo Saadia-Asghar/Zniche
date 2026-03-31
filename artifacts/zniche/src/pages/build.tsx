@@ -1,17 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Copy, AlertCircle, RefreshCcw, Sparkles, ArrowRight, Search, Lightbulb, Pen, Image, CreditCard, Globe } from "lucide-react";
+import { CheckCircle2, Copy, AlertCircle, RefreshCcw, ArrowRight, Search, Lightbulb, Pen, Image, CreditCard, Globe, X, Shield, MessageCircle, Twitter, Linkedin } from "lucide-react";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
 import { useCreateProduct, useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { ProductCover3D } from "@/components/product-cover-3d";
 
 const formSchema = z.object({
   skill: z.string().min(10, "Please provide more detail about your skill."),
@@ -25,13 +27,20 @@ const BUILD_STEPS = [
   { icon: Search, label: "Scanning market demand", description: "Researching demand and pricing for your skill" },
   { icon: Lightbulb, label: "Designing your product", description: "Creating a unique micro-product concept" },
   { icon: Pen, label: "Writing your sales page", description: "Crafting conversion-focused sales copy" },
-  { icon: Image, label: "Finding your cover image", description: "Selecting the perfect visual" },
+  { icon: Image, label: "Building your sales page", description: "Putting together the live page" },
   { icon: CreditCard, label: "Creating your checkout", description: "Setting up your payment link" },
+  { icon: MessageCircle, label: "Writing social captions", description: "Generating share-ready social posts" },
   { icon: Globe, label: "Publishing to marketplace", description: "Going live on Zniche" },
 ];
 
-type BuildPhase = "input" | "building" | "celebration";
+type BuildPhase = "input" | "verifying" | "building" | "celebration";
 type StepStatus = "pending" | "active" | "done" | "error";
+
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: string;
+}
 
 interface StreamEvent {
   step?: number;
@@ -53,6 +62,12 @@ export default function Build() {
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const outputPanelRef = useRef<HTMLDivElement>(null);
+
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [currentQuizQ, setCurrentQuizQ] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizScore, setQuizScore] = useState<number | null>(null);
 
   const createProduct = useCreateProduct();
   const { data: finalProduct } = useGetProduct(createdProductId || "", {
@@ -77,6 +92,63 @@ export default function Build() {
     }
   }, [stepOutputs, currentStep]);
 
+  const fireCelebration = useCallback(() => {
+    const duration = 2000;
+    const end = Date.now() + duration;
+    const frame = () => {
+      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
+      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#5B2EFF", "#00F0A0", "#FF5A70"] });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
+  }, []);
+
+  const onFormSubmit = async (values: FormValues) => {
+    setPhase("verifying");
+    setQuizLoading(true);
+    setQuizQuestions([]);
+    setCurrentQuizQ(0);
+    setQuizAnswers([]);
+    setQuizScore(null);
+
+    try {
+      const resp = await fetch("/api/ai/verify-skill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skill: values.skill }),
+        credentials: "include",
+      });
+      if (!resp.ok) throw new Error("Failed to load quiz");
+      const data = await resp.json();
+      setQuizQuestions(data.questions || []);
+    } catch {
+      toast.error("Could not load verification quiz. Starting build directly.");
+      startBuild(values);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  const handleQuizAnswer = (answer: string) => {
+    const newAnswers = [...quizAnswers, answer];
+    setQuizAnswers(newAnswers);
+
+    if (currentQuizQ < quizQuestions.length - 1) {
+      setCurrentQuizQ(prev => prev + 1);
+    } else {
+      let score = 0;
+      quizQuestions.forEach((q, i) => {
+        if (newAnswers[i]?.charAt(0) === q.correct) score++;
+      });
+      setQuizScore(score);
+
+      if (score >= 2) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ["#5B2EFF", "#00F0A0"] });
+        setTimeout(() => startBuild(form.getValues()), 1500);
+      }
+    }
+  };
+
   const startBuild = async (values: FormValues) => {
     try {
       setPhase("building");
@@ -89,11 +161,11 @@ export default function Build() {
       setCreatedProductId(newProduct.id);
 
       abortControllerRef.current = new AbortController();
-      const response = await fetch('/api/ai/build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: newProduct.id, ...values }),
-        credentials: 'include',
+        credentials: "include",
         signal: abortControllerRef.current.signal
       });
 
@@ -103,20 +175,20 @@ export default function Build() {
       const decoder = new TextDecoder();
       if (!reader) throw new Error("No response stream");
 
-      let buffer = '';
+      let buffer = "";
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             const dataStr = line.substring(6);
-            if (dataStr === '[DONE]') continue;
+            if (dataStr === "[DONE]") continue;
 
             try {
               const event: StreamEvent = JSON.parse(dataStr);
@@ -130,12 +202,13 @@ export default function Build() {
               if (event.step) {
                 setCurrentStep(event.step);
                 if (event.output) {
-                  setStepOutputs(prev => ({ ...prev, [event.step!]: event.output || '' }));
+                  setStepOutputs(prev => ({ ...prev, [event.step!]: event.output || "" }));
                 }
               }
 
               if (event.done) {
                 setPhase("celebration");
+                fireCelebration();
               }
             } catch (e) {
               console.error("SSE parse error", e);
@@ -144,7 +217,7 @@ export default function Build() {
         }
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') return;
+      if (error.name === "AbortError") return;
       setErrorMessage(error.message || "An unexpected error occurred");
       setErrorStep(currentStep);
       toast.error("Build failed");
@@ -164,6 +237,14 @@ export default function Build() {
     return "pending";
   };
 
+  const getShareUrl = () => `${window.location.origin}/product/${createdProductId}`;
+
+  const shareLinks = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`I just built "${finalProduct?.productName}" on Zniche! Check it out:`)}&url=${encodeURIComponent(getShareUrl())}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`Check out my new product: ${finalProduct?.productName} — ${finalProduct?.headline || "Built with AI on Zniche"}. Get it here: ${getShareUrl()}`)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getShareUrl())}`,
+  };
+
   if (phase === "input") {
     return (
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
@@ -181,17 +262,17 @@ export default function Build() {
           </p>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(startBuild)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
                 name="skill"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Describe what you're good at in one sentence..."
                         className="min-h-[130px] resize-none text-lg p-5 rounded-2xl border-border/50 bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                        {...field} 
+                        {...field}
                         data-testid="input-skill"
                       />
                     </FormControl>
@@ -212,9 +293,7 @@ export default function Build() {
                       </div>
                       <FormControl>
                         <Slider
-                          min={1}
-                          max={20}
-                          step={1}
+                          min={1} max={20} step={1}
                           value={[field.value]}
                           onValueChange={([v]) => field.onChange(v)}
                           className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
@@ -236,9 +315,7 @@ export default function Build() {
                       </div>
                       <FormControl>
                         <Slider
-                          min={5}
-                          max={500}
-                          step={5}
+                          min={5} max={500} step={5}
                           value={[field.value]}
                           onValueChange={([v]) => field.onChange(v)}
                           className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
@@ -250,9 +327,9 @@ export default function Build() {
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-primary/25 transition-all gap-2"
                 disabled={createProduct.isPending}
                 data-testid="button-submit-build"
@@ -265,6 +342,136 @@ export default function Build() {
               </Button>
             </form>
           </Form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (phase === "verifying") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full shadow-2xl relative"
+        >
+          <button
+            onClick={() => setPhase("input")}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Quick expertise check</h2>
+              <p className="text-sm text-muted-foreground">Takes 60 seconds. We verify creators to protect buyers.</p>
+            </div>
+          </div>
+
+          {quizLoading ? (
+            <div className="space-y-4 py-8">
+              <div className="animate-shimmer h-6 rounded-lg w-3/4" />
+              <div className="animate-shimmer h-10 rounded-lg" />
+              <div className="animate-shimmer h-10 rounded-lg" />
+              <div className="animate-shimmer h-10 rounded-lg" />
+            </div>
+          ) : quizScore !== null ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-6"
+            >
+              {quizScore >= 2 ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-neon-mint/20 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-neon-mint" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Verified!</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You scored {quizScore}/3. Starting your build now...
+                  </p>
+                  <div className="flex gap-1 justify-center">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < quizScore ? "bg-neon-mint" : "bg-muted"}`} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-zniche-red/20 flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-zniche-red" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Not quite</h3>
+                  <p className="text-muted-foreground mb-6">
+                    You scored {quizScore}/3. Want to try again or refine your skill?
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => {
+                        setPhase("input");
+                        setQuizScore(null);
+                      }}
+                    >
+                      Edit skill
+                    </Button>
+                    <Button
+                      className="rounded-full"
+                      onClick={() => onFormSubmit(form.getValues())}
+                    >
+                      Try again
+                    </Button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          ) : quizQuestions.length > 0 ? (
+            <div>
+              <div className="flex gap-1 mb-6">
+                {quizQuestions.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-all ${
+                      i < currentQuizQ ? "bg-neon-mint" : i === currentQuizQ ? "bg-primary" : "bg-muted"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentQuizQ}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                    Question {currentQuizQ + 1} of {quizQuestions.length}
+                  </p>
+                  <h3 className="text-lg font-semibold mb-5">
+                    {quizQuestions[currentQuizQ].question}
+                  </h3>
+                  <div className="space-y-2.5">
+                    {quizQuestions[currentQuizQ].options.map((opt, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleQuizAnswer(opt)}
+                        className="w-full text-left p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-sm font-medium"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          ) : null}
         </motion.div>
       </div>
     );
@@ -425,6 +632,17 @@ export default function Build() {
           <p className="text-lg text-muted-foreground">Your product is built and ready to sell.</p>
         </div>
 
+        {finalProduct?.productName && (
+          <div className="flex justify-center mb-8">
+            <ProductCover3D
+              productName={finalProduct.productName}
+              category={finalProduct.category}
+              width={300}
+              height={220}
+            />
+          </div>
+        )}
+
         <div className="space-y-4 mb-8">
           <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center justify-between gap-4">
             <div>
@@ -436,7 +654,7 @@ export default function Build() {
                 size="sm"
                 variant="ghost"
                 className="rounded-full"
-                onClick={() => copyToClipboard(`${window.location.origin}/product/${createdProductId}`, "Link copied!")}
+                onClick={() => copyToClipboard(getShareUrl(), "Link copied!")}
               >
                 <Copy className="w-4 h-4" />
               </Button>
@@ -445,6 +663,29 @@ export default function Build() {
                   View <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border/50 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-semibold">Share your product</p>
+            </div>
+            <div className="flex gap-2">
+              <a href={shareLinks.twitter} target="_blank" rel="noopener noreferrer" className="flex-1">
+                <Button variant="outline" className="w-full rounded-full gap-2 h-11">
+                  <Twitter className="w-4 h-4" /> X / Twitter
+                </Button>
+              </a>
+              <a href={shareLinks.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1">
+                <Button variant="outline" className="w-full rounded-full gap-2 h-11">
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </Button>
+              </a>
+              <a href={shareLinks.linkedin} target="_blank" rel="noopener noreferrer" className="flex-1">
+                <Button variant="outline" className="w-full rounded-full gap-2 h-11">
+                  <Linkedin className="w-4 h-4" /> LinkedIn
+                </Button>
+              </a>
             </div>
           </div>
 
@@ -474,13 +715,10 @@ export default function Build() {
 
         {finalProduct?.socialCaptions && (
           <div className="bg-card border border-border/50 rounded-2xl p-5 mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold">Share your product</p>
-            </div>
+            <p className="text-sm font-semibold mb-4">Pre-written social captions</p>
             <div className="space-y-3">
               {finalProduct.socialCaptions.split(/(?=\d+\.)/).map((caption: string, i: number) => {
-                const text = caption.replace(/^\d+\.\s*/, '').trim();
+                const text = caption.replace(/^\d+\.\s*/, "").trim();
                 if (!text) return null;
                 return (
                   <div key={i} className="flex gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors group">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductCover3D } from "@/components/product-cover-3d";
 import {
   Select,
   SelectContent,
@@ -21,12 +22,12 @@ export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-  
+
   const { data: listings = [], isLoading } = useGetMarketplaceListings();
   const { data: stats, isLoading: isLoadingStats } = useGetMarketplaceStats();
 
   const filtered = listings.filter(listing => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       listing.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.category?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -148,12 +149,13 @@ export default function Marketplace() {
               <Link href={`/product/${listing.id}`}>
                 <Card className="overflow-hidden group hover:border-primary/30 transition-all cursor-pointer border-border/30 bg-card/50">
                   <CardContent className="p-0">
-                    <div className={`bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 flex items-center justify-center relative overflow-hidden ${
-                      i % 3 === 0 ? 'h-40' : i % 3 === 1 ? 'h-28' : 'h-32'
-                    }`}>
-                      <h3 className="text-lg font-bold text-foreground/70 px-4 text-center">
-                        {listing.productName}
-                      </h3>
+                    <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                      <ProductCover3D
+                        productName={listing.productName || "Product"}
+                        category={listing.category}
+                        width={220}
+                        height={160}
+                      />
                     </div>
                     <div className="p-4">
                       <div className="flex justify-between items-center mb-2">

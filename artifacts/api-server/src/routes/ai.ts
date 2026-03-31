@@ -194,4 +194,35 @@ Number each caption 1-5. Each under 280 chars. Make them feel real and relatable
   }
 });
 
+router.post("/ai/verify-skill", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const { skill } = req.body;
+  if (!skill) {
+    res.status(400).json({ error: "Missing skill" });
+    return;
+  }
+
+  try {
+    const response = await callClaude(
+      `Generate 3 multiple-choice questions that a genuine expert in "${skill}" would answer correctly but a layperson would get wrong. Questions should be practical and specific, not trivially googlable. Return ONLY valid JSON with no other text: {"questions": [{"question": "...", "options": ["a) ...", "b) ...", "c) ...", "d) ..."], "correct": "a"}]}`
+    );
+
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      res.status(500).json({ error: "Failed to parse quiz" });
+      return;
+    }
+
+    const quiz = JSON.parse(jsonMatch[0]);
+    res.json(quiz);
+  } catch (err) {
+    req.log.error({ err }, "Skill verification error");
+    res.status(500).json({ error: "Failed to generate verification quiz" });
+  }
+});
+
 export default router;

@@ -4,6 +4,7 @@ import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, S
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
+import { ProductCover3D } from "@/components/product-cover-3d";
 import { useState, useEffect } from "react";
 
 const SKILL_EXAMPLES = [
@@ -240,10 +241,13 @@ export default function Home() {
                 <Card key={listing.id} className="overflow-hidden group hover:border-primary/30 transition-all cursor-pointer border-border/30">
                   <Link href={`/product/${listing.id}`}>
                     <CardContent className="p-0">
-                      <div className="h-36 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center relative overflow-hidden">
-                        <h3 className="text-xl font-bold text-foreground/80 px-6 text-center z-10">
-                          {listing.productName}
-                        </h3>
+                      <div className="flex items-center justify-center py-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                        <ProductCover3D
+                          productName={listing.productName || "Product"}
+                          category={listing.category}
+                          width={200}
+                          height={140}
+                        />
                       </div>
                       <div className="p-5">
                         <div className="flex justify-between items-start mb-3">

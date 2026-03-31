@@ -2,15 +2,15 @@
 
 ## Overview
 
-Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe their skill, watch AI build their micro-product live in 6 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
+Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe their skill, pass a quick verification quiz, watch AI build their micro-product live in 7 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
 
 **Tagline:** "Turn what you know into what you earn."
 
 ## Brand
 
-- Primary: `#6339FF` (Deep Violet)
-- Accent: `#00F5A0` (Neon Mint)
-- Alert: `#FF4D6D` (Signal Red)
+- Primary: `#5B2EFF` (Deep Violet)
+- Accent: `#00F0A0` (Neon Mint)
+- Alert: `#FF5A70` (Signal Red)
 - Dark background: `#08080F` (Abyss)
 - Light background: `#F0EDFF` (Ghost Haze)
 - Font: Inter (weight 700 headings, -0.04em tracking)
@@ -21,11 +21,13 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **Dark-first**: Default theme is dark (#08080F background)
 - **Glass navbar**: `backdrop-filter: blur(16px)` with semi-transparent bg
 - **Pill buttons**: `border-radius: 999px` for CTAs
-- **Focus rings**: Expanding `#6339FF` glow on focus
+- **Focus rings**: Expanding `#5B2EFF` glow on focus
 - **No spinners**: Shimmer loading animations in primary/10%
 - **Vertical timeline**: Build feed uses left-side vertical timeline
 - **Masonry layout**: Marketplace uses CSS columns masonry (2/3/4 responsive)
 - **Micro-animations**: 250ms ease-out transitions on state changes
+- **3D Product Covers**: Three.js rotating box with category-based colors, IntersectionObserver for perf
+- **Confetti**: canvas-confetti on verification pass and build completion
 
 ## Stack
 
@@ -44,6 +46,8 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **Payments**: Stripe Checkout
 - **Animations**: Framer Motion
 - **Theme**: next-themes (dark/light toggle)
+- **3D**: Three.js (product cover component)
+- **Confetti**: canvas-confetti
 
 ## Structure
 
@@ -64,10 +68,10 @@ artifacts-monorepo/
 
 ## Pages
 
-- `/` — Dark hero with typewriter skill cycling, live build feed mini-preview, 3-step explainer
-- `/build` — Conversational UI (textarea + sliders) → vertical timeline build feed (left timeline + right streaming panel) → celebration screen
-- `/marketplace` — Masonry layout, category filter pills, stat cards, search
-- `/product/:id` — Full sales page (no navbar/footer for conversion focus)
+- `/` — Dark hero with typewriter skill cycling, live build feed mini-preview, 3-step explainer, 3D product covers on listings
+- `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed (7 steps, left timeline + right streaming panel) → celebration screen with confetti, 3D cover, social sharing
+- `/marketplace` — Masonry layout with 3D product covers, category filter pills, stat cards, search
+- `/product/:id` — Full sales page with 3D cover, reviews section, star ratings (no navbar/footer for conversion focus)
 - `/dashboard` — Creator dashboard with products (auth required)
 - `/admin` — Admin panel (password: "zniche-admin")
 
@@ -78,10 +82,16 @@ artifacts-monorepo/
 
 ### `products` table
 - id, userId, skill, hoursPerWeek, price, status
-- productName, productDescription, productFormat, category
-- headline, salesCopy, socialCaptions, stripeCheckoutUrl
+- productName, tagline, productDescription, productFormat, category
+- headline, salesCopy, socialCaptions, stripeCheckoutUrl, stripeProductId
 - marketplaceListed, creatorFirstName, marketResearch
+- pageSlug, viewCount, totalSales, totalRevenue
+- isFeatured, isVerifiedCreator
 - createdAt, updatedAt
+
+### `reviews` table
+- id, productId, buyerEmail (masked in API responses), rating (1-5), reviewText
+- isVerifiedPurchase, createdAt
 
 ## API Routes
 
@@ -98,16 +108,33 @@ artifacts-monorepo/
 - `GET /api/marketplace` — Public marketplace listings
 - `GET /api/marketplace/stats` — Marketplace stats
 - `POST /api/stripe/create-checkout` — Create Stripe checkout session
-- `POST /api/ai/build` — SSE streaming AI build (6 steps)
+- `POST /api/ai/build` — SSE streaming AI build (7 steps)
+- `POST /api/ai/verify-skill` — Generate skill verification quiz (3 questions)
+- `GET /api/reviews/:productId` — Get reviews (emails masked)
+- `POST /api/reviews/:productId` — Submit a review
 
-## AI Build Feed (6 Steps)
+## AI Build Feed (7 Steps)
 
-1. Scanning market demand (Claude with web search)
+1. Scanning market demand (Claude market research)
 2. Designing your product (Claude product concept)
 3. Writing your sales page (Claude copywriting)
-4. Finding your cover image (visual selection)
+4. Building your sales page (page assembly)
 5. Creating your checkout (Stripe session)
-6. Publishing to marketplace (DB save + listing)
+6. Writing social captions (Claude social copy)
+7. Publishing to marketplace (DB save + listing)
+
+## Skill Verification Quiz
+
+- Triggered after build form submit, before the build starts
+- Claude generates 3 multiple-choice questions specific to the user's stated skill
+- Score ≥ 2/3 = pass (confetti + auto-start build)
+- Score < 2/3 = fail (retry or edit skill options)
+- Client-side gating (quiz is for trust signals, not hard security)
+
+## Social Sharing (Build Celebration)
+
+- Twitter/X, WhatsApp, LinkedIn deep link buttons
+- Pre-written social captions from the build (copyable)
 
 ## Environment Variables
 

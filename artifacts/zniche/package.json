@@ -77,6 +77,8 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "canvas-confetti": "^1.9.4"
+    "@types/three": "^0.183.1",
+    "canvas-confetti": "^1.9.4",
+    "three": "^0.183.2"
   }
 }

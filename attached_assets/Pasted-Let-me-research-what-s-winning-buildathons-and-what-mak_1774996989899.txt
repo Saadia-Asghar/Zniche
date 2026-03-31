@@ -1,0 +1,282 @@
+Let me research what's winning buildathons and what makes a truly fundable product in 2026.Now I have everything. Let me design the full improved concept and write the ultimate prompt.Here is everything you need to know, then the final complete prompt below.
+
+---
+
+## What makes this a real product, not an AI wrapper
+
+The 5 things judges will see that no other submission has:
+
+1. **Three.js 3D animated product covers** — every product gets a unique, rotating 3D visual generated live. Nobody in the gallery has this.
+2. **Skill verification before publishing** — Claude quizzes the creator with 3 questions to verify their expertise is real. This is a trust layer no other platform has built.
+3. **Real Stripe Connect marketplace** — money actually moves, sellers get paid, platform earns 5%. This is a live business, not a demo.
+4. **Creator reputation system** — verified buyer reviews, skill badges, response rate. Turns it into a trusted marketplace not a dump of AI products.
+5. **LinkedIn OAuth one-click post** — LinkedIn's `w_member_social` scope is 100% free and lets creators post directly from Zniche. Instant distribution.
+
+For WhatsApp — don't use the paid Business API. Use the free deep link (`wa.me/?text=`) which opens WhatsApp with a pre-filled message. Zero cost, works everywhere.
+
+---
+
+## The final improved Replit Agent 4 prompt — paste this:
+
+---
+
+> **Build Zniche** — a skill-to-income marketplace. Creators describe their expertise, AI builds their product, sales page, and Stripe checkout in 20 minutes. This must feel like a real funded startup, not a hackathon project.
+>
+> ---
+>
+> ## BRAND & DESIGN SYSTEM
+>
+> **Name:** Zniche (zee-niche). **Tagline:** "Your skill is a product waiting to earn."
+>
+> **Color tokens (store as CSS variables):**
+> ```css
+> --zniche-purple: #5B2EFF;
+> --zniche-mint: #00F0A0;
+> --zniche-red: #FF5A70;
+> --zniche-abyss: #07070E;
+> --zniche-surface: #0E0E1C;
+> --zniche-border: #1A1A2E;
+> --zniche-text-primary: #FFFFFF;
+> --zniche-text-secondary: #888899;
+> --zniche-text-muted: #3A3A5A;
+> ```
+>
+> **Light mode tokens:**
+> ```css
+> --zniche-bg: #F8F7FF;
+> --zniche-surface-light: #FFFFFF;
+> --zniche-border-light: #E8E4FF;
+> --zniche-text-primary-light: #0A0A1A;
+> --zniche-text-secondary-light: #5A5A7A;
+> ```
+>
+> **Typography:** Import Inter from Google Fonts. Weights: 400, 500, 700, 800. All headings: weight 800, letter-spacing -0.04em. No system fonts fallback visible to user.
+>
+> **Logo:** SVG "Z" lettermark in a `#5B2EFF` rounded square with a `#00F0A0` dot at bottom-right. Use in navbar, favicon, og:image.
+>
+> **CRITICAL UI RULES — this is what makes it win on design:**
+> - Implement FULL dark/light mode toggle. Store preference in localStorage. Default: dark.
+> - Dark mode background: `#07070E`. Light mode background: `#F8F7FF`.
+> - ALL buttons: `border-radius: 999px` (pill shape). No square buttons anywhere.
+> - Navbar: `backdrop-filter: blur(16px)` + `background: rgba(7,7,14,0.7)` dark / `rgba(248,247,255,0.8)` light. Sticky top.
+> - Cards: in dark mode `background: #0E0E1C; border: 0.5px solid #1A1A2E`. In light mode `background: #FFFFFF; border: 0.5px solid #E8E4FF`.
+> - NO generic hero section. The landing page hero has an animated typewriter cycling through skill examples on the left and a floating 3D product card on the right.
+> - Transitions: ALL state changes use `transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1)`.
+> - Focus rings: `outline: 2px solid #5B2EFF; outline-offset: 2px` on all interactive elements.
+> - No loading spinners. Use animated skeleton shimmer: `background: linear-gradient(90deg, #1A1A2E 25%, #252540 50%, #1A1A2E 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite`.
+>
+> ---
+>
+> ## THREE.JS 3D PRODUCT COVERS
+>
+> This is the signature visual feature. Implement as follows:
+>
+> Import Three.js from CDN: `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`
+>
+> For every product generated, create a `<canvas id="product-3d-cover">` and render a rotating 3D object using Three.js:
+> - A floating rounded rectangle (BoxGeometry with high border radius) with the product name embossed on the face
+> - Material: `MeshStandardMaterial` with `color: 0x5B2EFF` and `metalness: 0.3, roughness: 0.4`
+> - Add a subtle ambient light + directional light
+> - Auto-rotate on Y axis: `mesh.rotation.y += 0.008` in the animation loop
+> - On hover: increase rotation speed to `0.02`
+> - Color changes per product category: Education=`#5B2EFF`, Design=`#FF5A70`, Fitness=`#00F0A0`, Tech=`#0099FF`, Food=`#FFB347`
+> - Render at 300×220px for the build feed, 200×140px for marketplace cards
+> - Add to all product pages and marketplace cards
+>
+> ---
+>
+> ## SKILL VERIFICATION ENGINE
+>
+> Before a product is published to the marketplace, run this check:
+>
+> After step 2 (product concept), show a "Verify your expertise" modal:
+> - Heading: "Quick expertise check — takes 60 seconds"
+> - Subheading: "We verify creators to protect buyers. Answer 3 questions."
+> - Call Claude API with prompt: `"Generate 3 multiple-choice questions that a genuine expert in [SKILL_INPUT] would answer correctly but a layperson would get wrong. Questions should be practical and specific. Return JSON: {questions: [{question, options: [a,b,c,d], correct: 'a'}]}"` 
+> - Show questions as a clean 3-step quiz UI. Each question fades in after the previous is answered.
+> - If score ≥ 2/3: show green checkmark, add "Verified Creator" badge to profile, continue to step 3.
+> - If score < 2/3: show friendly message "Want to try again or adjust your skill description?" — offer retry or edit skill.
+> - Store `is_verified: boolean` in users table. Show "Verified" badge on all marketplace listings.
+>
+> ---
+>
+> ## SOCIAL SHARING (ALL FREE)
+>
+> ### LinkedIn OAuth (free — `w_member_social` scope):
+> - Add "Connect LinkedIn" button in user dashboard settings.
+> - OAuth flow: `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LI_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20w_member_social`
+> - Store access token in users table as `linkedin_access_token`.
+> - After product build completes, show "Post to LinkedIn" button.
+> - On click: POST to `https://api.linkedin.com/v2/ugcPosts` with pre-written caption and product URL.
+> - Caption template: `"I just built [PRODUCT_NAME] — a [PRODUCT_FORMAT] for people who want to [BENEFIT]. Live now and taking buyers: [PAGE_URL] #Zniche #[CATEGORY]"`
+> - Store LinkedIn client ID as `LINKEDIN_CLIENT_ID`, secret as `LINKEDIN_CLIENT_SECRET` in Replit Secrets.
+>
+> ### WhatsApp (100% free, no API key):
+> - Generate this URL: `https://wa.me/?text=` + encodeURIComponent(`"Check out my new product: [PRODUCT_NAME] — [TAGLINE]. Get it here: [PAGE_URL]"`)
+> - Open in new tab on button click. Zero cost.
+>
+> ### X/Twitter (100% free intent URL):
+> - Generate: `https://twitter.com/intent/tweet?text=` + encodeURIComponent(caption) + `&url=` + encodeURIComponent(PAGE_URL)
+> - The product page's `<meta property="og:image">` ensures the Unsplash hero auto-renders as a Twitter card.
+>
+> ### WhatsApp Share Card (auto-generated):
+> - When product is published, use a `<canvas>` to draw a branded share image (1200×630px): product name, tagline, price, Zniche logo, colored background from product category. Convert to base64 PNG. Store as `share_card_url` in DB.
+>
+> ---
+>
+> ## DATABASE (PostgreSQL + Drizzle ORM)
+>
+> ```sql
+> users: id, replit_user_id, display_name, email, country_code, 
+>   stripe_account_id, linkedin_access_token, is_verified, 
+>   verified_skill, reputation_score, total_sales, total_revenue, 
+>   created_at
+>
+> products: id, user_id, skill_input, hours_per_week, price,
+>   product_name, tagline, product_description, product_format,
+>   category, market_research, sales_copy (JSON with headline/subheadline/body/benefits/cta),
+>   unsplash_image_url, share_card_url, stripe_checkout_url, stripe_price_id,
+>   page_slug, status (building|verifying|live|paused),
+>   view_count, total_sales, total_revenue, is_featured, created_at
+>
+> reviews: id, product_id, buyer_email, rating (1-5), review_text, 
+>   is_verified_purchase, created_at
+>
+> social_captions: id, product_id, platform, caption_text, was_posted, posted_at
+>
+> purchases: id, product_id, buyer_email, amount, platform_fee,
+>   stripe_payment_intent_id, created_at
+> ```
+>
+> ---
+>
+> ## ALL PAGES
+>
+> ### `/` Landing Page
+> - Sticky glass navbar (blur + semi-transparent)
+> - Hero: left side has typewriter animation cycling: `["Arabic tutor", "Excel wizard", "Fitness coach", "Home cook", "Python teacher", "Graphic designer", "Urdu poet"]`. Right side: Three.js 3D product card floating with slow rotation.
+> - Below hero: live counter showing real stats from DB (total creators, total products, total earnings)
+> - "How it works": 3 horizontal steps with animated connector line
+> - "Live from the marketplace": masonry grid of 6 most recent products (real DB data)
+> - Testimonials: 3 creator cards with name, country flag, earnings shown
+> - Footer: links, dark/light toggle, social icons
+>
+> ### `/build` (Replit Auth protected)
+>
+> **Screen 1 — Skill conversation:**
+> Full viewport. NOT a form. Single large `<textarea>` with animated placeholder text. Two custom-styled range sliders below (hours/week: 1–20, price: $5–$500) with live value display. Country flag auto-detected from REST Countries API via IP geolocation (`https://ipapi.co/json/`). Single pill CTA button.
+>
+> **Screen 2 — Skill Verification Modal** (appears before build starts):
+> Dark overlay. Centered card. 3-question quiz from Claude. Progress bar at top. Each answer triggers subtle green/red flash. Pass → confetti burst (use canvas-confetti from CDN `https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js`).
+>
+> **Screen 3 — Live Build Feed:**
+> Split screen. Left: vertical timeline (7 steps). Right: streaming text output panel with monospace font for AI output. Each step completion triggers: left dot fills `#00F0A0`, right panel shows result in a clean card, step below fades in. Three.js canvas renders product cover in real-time at step 3. Stripe link appears at step 5. All 7 steps must complete before celebration.
+>
+> **Screen 4 — Celebration:**
+> Canvas confetti. Large checkmark animation. Three cards: [Live page URL + copy], [Stripe link + copy], [Share buttons row: LinkedIn | WhatsApp | Twitter]. Below: all 5 social captions in 3 tabs (auto-selected). Each caption has 1-click copy with "Copied!" feedback.
+>
+> ### `/p/[slug]` — Public Product Page
+> - NO navbar, NO footer. Full focus on conversion.
+> - Full-width Unsplash image with `object-fit: cover; height: 320px` with a dark gradient overlay.
+> - Product name overlaid in large white text on gradient.
+> - Three.js 3D cover renders below at 300×220.
+> - Sales copy: headline → subheadline → body → 3 benefit bullets.
+> - Creator card (right sidebar desktop / bottom mobile): avatar initials circle, name, country flag, "Verified Creator" badge if applicable, reputation score.
+> - Sticky buy bar (bottom on mobile, right sidebar on desktop): price + "Buy now" pill button → opens Stripe Checkout in new tab.
+> - Reviews section below: star rating average, list of verified reviews. Empty state: "Be the first buyer — leave a review."
+> - OG meta tags: `og:title`, `og:description`, `og:image` (Unsplash URL), `og:url`.
+>
+> ### `/marketplace`
+> - Sticky filter bar: All | Guides | Sessions | Courses | Templates | Toolkits
+> - Sort: Newest | Price ↑ | Price ↓ | Top rated | Most viewed
+> - Search input with 300ms debounce, queries DB live
+> - Masonry grid (CSS columns: 2 mobile, 3 tablet, 4 desktop)
+> - Each card: Three.js 3D cover (200×140), product name, creator name + flag, category pill, price, star rating, "Buy now" button
+> - Featured listings show `#5B2EFF` top border (2px)
+> - Infinite scroll (load 12, then +12 on scroll-to-bottom)
+>
+> ### `/dashboard` (Replit Auth protected)
+> - 4 metric cards: Total Revenue, Total Sales, Products Live, Profile Views
+> - Products table: name, status pill, view count, sales, revenue, 3-dot action menu (Edit | Pause | Delete | Refresh with AI)
+> - "Build another product" button
+> - "Connect LinkedIn" OAuth button with status indicator
+> - Settings panel: display name, bio (shown on marketplace), country flag
+>
+> ### `/admin` (password: `process.env.ADMIN_PASSWORD`)
+> - Site stats: total users, total products, total GMV, today's revenue
+> - Toggle featured status on any listing
+> - User list with total revenue per creator
+>
+> ---
+>
+> ## API INTEGRATIONS (ALL FREE / PAY-PER-USE ONLY)
+>
+> | API | Purpose | Free tier |
+> |-----|---------|-----------|
+> | Anthropic Claude `claude-sonnet-4-20250514` | All AI steps | Free credits included |
+> | Stripe Connect | Payments + 5% platform fee | Free setup, pay per txn |
+> | Unsplash `api.unsplash.com` | Product hero images | 50 req/hr free |
+> | Resend `api.resend.com` | Email notifications | 3,000/mo free |
+> | REST Countries `restcountries.com/v3.1` | Country flags | 100% free |
+> | ipapi.co/json | IP geolocation for country | 1,000/day free |
+> | LinkedIn OAuth `api.linkedin.com` | One-click post | Free with app registration |
+> | LottieFiles CDN | Success animations | Free CDN |
+> | canvas-confetti CDN | Celebration effect | Free CDN |
+> | Three.js r128 CDN | 3D product covers | Free CDN |
+>
+> All keys stored in Replit Secrets. Never in frontend code.
+>
+> ---
+>
+> ## STREAMING IMPLEMENTATION
+>
+> For all Claude API calls use Server-Sent Events (SSE):
+> ```javascript
+> // Backend route
+> app.get('/api/build/stream/:step', async (req, res) => {
+>   res.setHeader('Content-Type', 'text/event-stream');
+>   res.setHeader('Cache-Control', 'no-cache');
+>   res.setHeader('Connection', 'keep-alive');
+>   const stream = await anthropic.messages.stream({...});
+>   stream.on('text', (text) => res.write(`data: ${JSON.stringify({text})}\n\n`));
+>   stream.on('end', () => res.write('data: [DONE]\n\n'));
+> });
+>
+> // Frontend consumption
+> const es = new EventSource('/api/build/stream/research');
+> es.onmessage = (e) => {
+>   if (e.data === '[DONE]') { es.close(); markStepComplete(); return; }
+>   const {text} = JSON.parse(e.data);
+>   outputPanel.textContent += text; // streams word by word
+> };
+> ```
+>
+> ---
+>
+> ## REPUTATION SYSTEM
+>
+> After a purchase completes (Stripe webhook fires):
+> 1. Send buyer an email via Resend: "You bought [PRODUCT_NAME]. Leave a review to help other buyers."
+> 2. Review link: `/review/[purchase_id]` — simple 1–5 star + text form (no auth required for buyer)
+> 3. Save to `reviews` table with `is_verified_purchase: true`
+> 4. Recalculate creator's `reputation_score` = weighted average of all reviews
+> 5. Show on marketplace cards and product pages
+>
+> ---
+>
+> ## PERFORMANCE REQUIREMENTS
+> - Lighthouse score target: 90+ on performance
+> - All images: lazy loaded with `loading="lazy"`
+> - Three.js canvases: use `IntersectionObserver` — only render when visible, pause when off-screen
+> - PostgreSQL: add index on `products.page_slug`, `products.status`, `products.category`
+> - API responses: cache marketplace listings for 60 seconds using in-memory cache
+> - Mobile: all tap targets minimum 44×44px
+>
+> ---
+>
+> ## WHAT THIS IS NOT
+> This is NOT a form that sends text to Claude and shows the output. It is a complete marketplace with real payments, real social distribution, real buyer reviews, real 3D visuals, and a real revenue model. Every feature must actually work in the demo. Build it so a judge can go to the URL, create a product, share it, and the judge's colleague could buy it.
+
+---
+
+This is the complete, final, launch-ready version. Want me to now write the Week 2 checkpoint submission text and the 60-second demo script for your video recording?
