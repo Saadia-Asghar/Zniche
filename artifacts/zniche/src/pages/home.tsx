@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, useInView } from "framer-motion";
-import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, Users, Package } from "lucide-react";
+import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, Users, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
@@ -145,6 +145,83 @@ const staggerContainer = {
     transition: { staggerChildren: 0.15 }
   }
 };
+
+function TestimonialsCarousel() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % TESTIMONIALS.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section className="py-20 px-4 border-t border-border/30">
+      <div className="container mx-auto max-w-3xl">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] mb-3">Loved by creators</h2>
+          <p className="text-muted-foreground text-lg">Join hundreds of experts already earning with Zniche.</p>
+        </div>
+        <div className="relative overflow-hidden">
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <div className="glass-card rounded-2xl p-8 text-center">
+              <div className="flex justify-center gap-0.5 mb-5">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} className={`w-5 h-5 ${s <= TESTIMONIALS[active].rating ? "fill-accent text-accent" : "text-muted-foreground/20"}`} />
+                ))}
+              </div>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-6 max-w-lg mx-auto">
+                "{TESTIMONIALS[active].text}"
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                  {TESTIMONIALS[active].name.charAt(0)}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold">{TESTIMONIALS[active].name}</p>
+                  <p className="text-xs text-muted-foreground">{TESTIMONIALS[active].role}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={() => setActive((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)}
+              className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center hover:bg-muted/50 transition-colors"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex gap-2">
+              {TESTIMONIALS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i === active ? "bg-primary w-6" : "bg-muted-foreground/30"}`}
+                  aria-label={`Go to testimonial ${i + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setActive((prev) => (prev + 1) % TESTIMONIALS.length)}
+              className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center hover:bg-muted/50 transition-colors"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const { data: listings = [] } = useGetMarketplaceListings();
@@ -372,43 +449,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 px-4 border-t border-border/30">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] mb-3">Loved by creators</h2>
-            <p className="text-muted-foreground text-lg">Join hundreds of experts already earning with Zniche.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
-                  <div className="flex gap-0.5 mb-4">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} className={`w-4 h-4 ${s <= t.rating ? "fill-accent text-accent" : "text-muted-foreground/20"}`} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-4">"{t.text}"</p>
-                  <div className="flex items-center gap-3 pt-4 border-t border-border/30">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {t.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">{t.role}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TestimonialsCarousel />
 
       <section className="py-20 px-4 border-t border-border/30">
         <div className="container mx-auto max-w-3xl text-center">
