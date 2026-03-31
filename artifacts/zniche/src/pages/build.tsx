@@ -4,36 +4,33 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle2, Copy, AlertCircle, RefreshCcw, Sparkles, ArrowRight } from "lucide-react";
+import { CheckCircle2, Copy, AlertCircle, RefreshCcw, Sparkles, ArrowRight, Search, Lightbulb, Pen, Image, CreditCard, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCreateProduct, useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 
 const formSchema = z.object({
   skill: z.string().min(10, "Please provide more detail about your skill."),
-  hoursPerWeek: z.coerce.number().min(1, "Must be at least 1 hour").max(168),
-  price: z.coerce.number().min(5, "Minimum price is $5").max(500, "Maximum price is $500"),
+  hoursPerWeek: z.coerce.number().min(1).max(20),
+  price: z.coerce.number().min(5).max(500),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const STEPS = [
-  "Researching market demand for your skill",
-  "Generating your micro-product concept",
-  "Writing your sales copy and pricing",
-  "Building your live sales page",
-  "Creating your payment setup",
-  "Writing 5 social media captions",
-  "Adding your product to the Zniche marketplace"
+const BUILD_STEPS = [
+  { icon: Search, label: "Scanning market demand", description: "Researching demand and pricing for your skill" },
+  { icon: Lightbulb, label: "Designing your product", description: "Creating a unique micro-product concept" },
+  { icon: Pen, label: "Writing your sales page", description: "Crafting conversion-focused sales copy" },
+  { icon: Image, label: "Finding your cover image", description: "Selecting the perfect visual" },
+  { icon: CreditCard, label: "Creating your checkout", description: "Setting up your payment link" },
+  { icon: Globe, label: "Publishing to marketplace", description: "Going live on Zniche" },
 ];
 
-type BuildStatus = "idle" | "building" | "completed" | "error";
+type BuildPhase = "input" | "building" | "celebration";
 type StepStatus = "pending" | "active" | "done" | "error";
 
 interface StreamEvent {
@@ -48,70 +45,62 @@ interface StreamEvent {
 
 export default function Build() {
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState<BuildStatus>("idle");
+  const [phase, setPhase] = useState<BuildPhase>("input");
   const [currentStep, setCurrentStep] = useState(0);
   const [stepOutputs, setStepOutputs] = useState<Record<number, string>>({});
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorStep, setErrorStep] = useState<number | null>(null);
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const outputPanelRef = useRef<HTMLDivElement>(null);
 
   const createProduct = useCreateProduct();
   const { data: finalProduct } = useGetProduct(createdProductId || "", {
-    query: { enabled: !!createdProductId, queryKey: getGetProductQueryKey(createdProductId || "") }
+    query: { enabled: !!createdProductId && phase === "celebration", queryKey: getGetProductQueryKey(createdProductId || "") }
   });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      skill: "",
-      hoursPerWeek: 5,
-      price: 49,
-    },
+    defaultValues: { skill: "", hoursPerWeek: 5, price: 49 },
   });
 
-  // Clean up stream on unmount
+  const hoursValue = form.watch("hoursPerWeek");
+  const priceValue = form.watch("price");
+
   useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
+    return () => { abortControllerRef.current?.abort(); };
   }, []);
+
+  useEffect(() => {
+    if (outputPanelRef.current) {
+      outputPanelRef.current.scrollTop = outputPanelRef.current.scrollHeight;
+    }
+  }, [stepOutputs, currentStep]);
 
   const startBuild = async (values: FormValues) => {
     try {
-      setStatus("building");
+      setPhase("building");
       setCurrentStep(1);
       setStepOutputs({});
       setErrorMessage("");
+      setErrorStep(null);
 
-      // 1. Create product skeleton
-      const newProduct = await createProduct.mutateAsync({
-        data: values
-      });
-      
+      const newProduct = await createProduct.mutateAsync({ data: values });
       setCreatedProductId(newProduct.id);
 
-      // 2. Start SSE Stream
       abortControllerRef.current = new AbortController();
       const response = await fetch('/api/ai/build', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: newProduct.id,
-          ...values
-        }),
+        body: JSON.stringify({ productId: newProduct.id, ...values }),
         credentials: 'include',
         signal: abortControllerRef.current.signal
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to start build process");
-      }
+      if (!response.ok) throw new Error("Failed to start build process");
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-
       if (!reader) throw new Error("No response stream");
 
       let buffer = '';
@@ -133,389 +122,397 @@ export default function Build() {
               const event: StreamEvent = JSON.parse(dataStr);
 
               if (event.error) {
-                setStatus("error");
                 setErrorMessage(event.error);
+                setErrorStep(currentStep);
                 return;
               }
 
               if (event.step) {
                 setCurrentStep(event.step);
                 if (event.output) {
-                  setStepOutputs(prev => ({
-                    ...prev,
-                    [event.step!]: event.output || ''
-                  }));
+                  setStepOutputs(prev => ({ ...prev, [event.step!]: event.output || '' }));
                 }
               }
 
               if (event.done) {
-                setStatus("completed");
-                setCurrentStep(8); // past the end
+                setPhase("celebration");
               }
             } catch (e) {
-              console.error("Error parsing SSE JSON", e, dataStr);
+              console.error("SSE parse error", e);
             }
           }
         }
       }
-
     } catch (error: any) {
       if (error.name === 'AbortError') return;
-      setStatus("error");
       setErrorMessage(error.message || "An unexpected error occurred");
-      toast.error("Build process failed");
+      setErrorStep(currentStep);
+      toast.error("Build failed");
     }
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, label = "Copied!") => {
     navigator.clipboard.writeText(text);
-    toast.success("Caption copied!");
+    toast.success(label);
   };
 
   const getStepStatus = (index: number): StepStatus => {
-    const stepNumber = index + 1;
-    if (status === "error" && currentStep === stepNumber) return "error";
-    if (currentStep > stepNumber) return "done";
-    if (currentStep === stepNumber && status === "building") return "active";
+    const stepNum = index + 1;
+    if (errorStep === stepNum) return "error";
+    if (currentStep > stepNum) return "done";
+    if (currentStep === stepNum && phase === "building") return "active";
     return "pending";
   };
 
-  // Render Form State
-  if (status === "idle") {
+  if (phase === "input") {
     return (
-      <div className="container max-w-2xl mx-auto py-12 px-4">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold mb-4">What's your skill?</h1>
-          <p className="text-muted-foreground text-lg">Tell us what you do. We'll handle the rest.</p>
-        </div>
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-xl"
+        >
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-[-0.04em] text-center mb-3">
+            What are you great at?
+          </h1>
+          <p className="text-muted-foreground text-center text-lg mb-10">
+            Describe your skill in one sentence. We'll build everything else.
+          </p>
 
-        <Card className="border shadow-lg">
-          <CardContent className="pt-8">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(startBuild)} className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(startBuild)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="skill"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe what you're good at in one sentence..."
+                        className="min-h-[130px] resize-none text-lg p-5 rounded-2xl border-border/50 bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        {...field} 
+                        data-testid="input-skill"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="skill"
+                  name="hoursPerWeek"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">1. Describe your skill</FormLabel>
-                      <p className="text-sm text-muted-foreground mb-2">Be specific. e.g., "I help indie founders optimize their PostgreSQL queries"</p>
+                      <div className="flex justify-between items-baseline mb-3">
+                        <span className="text-sm font-medium text-muted-foreground">Hours/week</span>
+                        <span className="text-2xl font-bold text-primary">{hoursValue}</span>
+                      </div>
                       <FormControl>
-                        <Textarea 
-                          placeholder="I am an expert in..." 
-                          className="min-h-[120px] resize-none text-base p-4" 
-                          {...field} 
-                          data-testid="input-skill"
+                        <Slider
+                          min={1}
+                          max={20}
+                          step={1}
+                          value={[field.value]}
+                          onValueChange={([v]) => field.onChange(v)}
+                          className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                          data-testid="input-hours"
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="hoursPerWeek"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold">2. Hours per week available?</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input type="number" {...field} className="pl-4 h-12 text-lg" data-testid="input-hours" />
-                            <span className="absolute right-4 top-3 text-muted-foreground">hrs</span>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold">3. Target price point</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <span className="absolute left-4 top-3 text-muted-foreground">$</span>
-                            <Input type="number" {...field} className="pl-8 h-12 text-lg" data-testid="input-price" />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  size="lg" 
-                  className="w-full h-14 text-lg mt-4 shadow-xl hover:shadow-primary/20 transition-all rounded-xl gap-2"
-                  disabled={createProduct.isPending}
-                  data-testid="button-submit-build"
-                >
-                  {createProduct.isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                  Generate My Product
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Render Build Feed State
-  if (status === "building" || status === "error") {
-    const progress = Math.min(((currentStep - 1) / STEPS.length) * 100, 100);
-
-    return (
-      <div className="container max-w-3xl mx-auto py-12 px-4 min-h-[80vh] flex flex-col">
-        <div className="text-center mb-12">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold mb-4"
-          >
-            Building your empire...
-          </motion.h1>
-          <Progress value={progress} className="h-2 mb-2 w-full bg-secondary" />
-          <p className="text-sm text-muted-foreground font-mono uppercase tracking-wider">
-            STEP {Math.min(currentStep, 7)} OF 7
-          </p>
-        </div>
-
-        <div className="space-y-6 flex-1">
-          {STEPS.map((stepName, index) => {
-            const stepStat = getStepStatus(index);
-            const output = stepOutputs[index + 1];
-
-            return (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: stepStat === "pending" ? 0.4 : 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className={`relative flex gap-4 p-4 rounded-xl border transition-colors ${
-                  stepStat === "active" ? "border-primary bg-primary/5 shadow-md shadow-primary/5" : 
-                  stepStat === "done" ? "border-border bg-card" : 
-                  stepStat === "error" ? "border-destructive bg-destructive/5" : "border-transparent"
-                }`}
-              >
-                <div className="flex-shrink-0 mt-1">
-                  {stepStat === "pending" && <div className="w-6 h-6 rounded-full border-2 border-muted" />}
-                  {stepStat === "active" && (
-                    <div className="relative w-6 h-6 flex items-center justify-center">
-                      <span className="absolute w-full h-full rounded-full bg-primary/30 animate-ping" />
-                      <div className="w-3 h-3 rounded-full bg-primary relative z-10" />
-                    </div>
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-baseline mb-3">
+                        <span className="text-sm font-medium text-muted-foreground">Your price</span>
+                        <span className="text-2xl font-bold text-primary">${priceValue}</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={5}
+                          max={500}
+                          step={5}
+                          value={[field.value]}
+                          onValueChange={([v]) => field.onChange(v)}
+                          className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                          data-testid="input-price"
+                        />
+                      </FormControl>
+                    </FormItem>
                   )}
-                  {stepStat === "done" && <CheckCircle2 className="w-6 h-6 text-accent" />}
-                  {stepStat === "error" && <AlertCircle className="w-6 h-6 text-destructive" />}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className={`text-lg font-medium ${stepStat === "active" ? "text-primary font-bold" : ""}`}>
-                    {stepName}
-                  </h3>
-                  
-                  <AnimatePresence>
-                    {output && (stepStat === "done" || stepStat === "active") && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        className="mt-3 overflow-hidden text-sm"
-                      >
-                        <div className="p-4 bg-muted/50 rounded-lg border font-mono text-muted-foreground max-h-40 overflow-y-auto whitespace-pre-wrap">
-                          {output}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                />
+              </div>
 
-        {status === "error" && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-8 p-6 bg-destructive/10 border border-destructive rounded-xl text-center"
-          >
-            <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-destructive mb-2">Build Failed</h3>
-            <p className="text-destructive/80 mb-6">{errorMessage}</p>
-            <Button 
-              variant="destructive" 
-              onClick={() => startBuild(form.getValues())}
-              className="gap-2"
-            >
-              <RefreshCcw className="w-4 h-4" /> Retry Build
-            </Button>
-          </motion.div>
-        )}
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-primary/25 transition-all gap-2"
+                disabled={createProduct.isPending}
+                data-testid="button-submit-build"
+              >
+                {createProduct.isPending ? (
+                  <span className="animate-pulse">Starting...</span>
+                ) : (
+                  <>Build my product <ArrowRight className="w-5 h-5" /></>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </motion.div>
       </div>
     );
   }
 
-  // Render Completed State
-  return (
-    <div className="container max-w-4xl mx-auto py-12 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none flex justify-center z-0 overflow-hidden text-accent">
-        <motion.div 
-          initial={{ opacity: 0, y: 100, scale: 0 }}
-          animate={{ opacity: [0, 1, 0], y: -500, scale: [0, 1.5, 2] }}
-          transition={{ duration: 2, ease: "easeOut" }}
-          className="absolute bottom-0 text-6xl"
-        >
-          <Sparkles className="w-16 h-16" />
-        </motion.div>
-        <motion.div 
-          initial={{ opacity: 0, y: 100, scale: 0 }}
-          animate={{ opacity: [0, 1, 0], y: -400, x: -200, scale: [0, 1, 1.5] }}
-          transition={{ duration: 1.8, delay: 0.2, ease: "easeOut" }}
-          className="absolute bottom-0 text-5xl"
-        >
-          <CheckCircle2 className="w-12 h-12 text-primary" />
-        </motion.div>
-        <motion.div 
-          initial={{ opacity: 0, y: 100, scale: 0 }}
-          animate={{ opacity: [0, 1, 0], y: -450, x: 200, scale: [0, 1, 1.5] }}
-          transition={{ duration: 1.9, delay: 0.1, ease: "easeOut" }}
-          className="absolute bottom-0 text-5xl"
-        >
-          <Sparkles className="w-14 h-14 text-primary" />
-        </motion.div>
-      </div>
+  if (phase === "building") {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row">
+        <div className="w-full lg:w-80 xl:w-96 border-r border-border/50 bg-card/30 p-6 lg:p-8 flex-shrink-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">Build Progress</p>
+          <div className="space-y-1">
+            {BUILD_STEPS.map((step, i) => {
+              const stepStat = getStepStatus(i);
+              const Icon = step.icon;
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 py-3 px-3 rounded-xl transition-all duration-300 ${
+                    stepStat === "active" ? "bg-primary/10" : ""
+                  } ${stepStat === "pending" ? "opacity-35" : ""}`}
+                >
+                  <div className="relative flex-shrink-0">
+                    {stepStat === "done" && (
+                      <div className="w-8 h-8 rounded-full bg-neon-mint flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                      </div>
+                    )}
+                    {stepStat === "active" && (
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center animate-pulse-ring">
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    {stepStat === "pending" && (
+                      <div className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center">
+                        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                    )}
+                    {stepStat === "error" && (
+                      <div className="w-8 h-8 rounded-full bg-destructive flex items-center justify-center">
+                        <AlertCircle className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    {i < BUILD_STEPS.length - 1 && (
+                      <div className={`absolute left-1/2 top-full w-0.5 h-4 -translate-x-1/2 ${
+                        stepStat === "done" ? "bg-neon-mint" : "bg-border"
+                      }`} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium truncate ${stepStat === "active" ? "text-primary font-semibold" : "text-foreground"}`}>
+                      {step.label}
+                    </p>
+                    {stepStat === "active" && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                    )}
+                    {stepStat === "done" && (
+                      <p className="text-xs text-neon-mint font-semibold">done</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      <motion.div 
+          {errorStep && (
+            <div className="mt-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive font-medium mb-3">{errorMessage}</p>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="rounded-full gap-2 w-full"
+                onClick={() => {
+                  setErrorStep(null);
+                  setErrorMessage("");
+                  startBuild(form.getValues());
+                }}
+              >
+                <RefreshCcw className="w-3.5 h-3.5" /> Retry
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="border-b border-border/50 px-6 py-4 flex items-center justify-between bg-card/20">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-neon-mint animate-pulse" />
+              <span className="text-sm font-medium text-muted-foreground">Live output</span>
+            </div>
+            <span className="text-xs font-mono text-muted-foreground">
+              STEP {Math.min(currentStep, BUILD_STEPS.length)} / {BUILD_STEPS.length}
+            </span>
+          </div>
+
+          <div ref={outputPanelRef} className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+            <AnimatePresence mode="popLayout">
+              {BUILD_STEPS.map((step, i) => {
+                const stepNum = i + 1;
+                const output = stepOutputs[stepNum];
+                const stepStat = getStepStatus(i);
+                if (stepStat === "pending") return null;
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <step.icon className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-primary">{step.label}</h3>
+                      {stepStat === "active" && (
+                        <div className="flex gap-1 ml-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                        </div>
+                      )}
+                    </div>
+                    {output && (
+                      <div className="bg-card border border-border/50 rounded-xl p-4 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap font-mono max-h-64 overflow-y-auto">
+                        {output}
+                      </div>
+                    )}
+                    {stepStat === "active" && !output && (
+                      <div className="animate-shimmer h-24 rounded-xl border border-border/30" />
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}
-        className="text-center mb-16 relative z-10"
+        transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
+        className="w-full max-w-2xl"
       >
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/20 text-accent mb-6 shadow-xl shadow-accent/10">
-          <Sparkles className="w-10 h-10" />
+        <div className="text-center mb-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", bounce: 0.5 }}
+            className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-neon-mint/20 text-neon-mint mb-6"
+          >
+            <CheckCircle2 className="w-10 h-10" />
+          </motion.div>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-[-0.04em] mb-3">You're live!</h1>
+          <p className="text-lg text-muted-foreground">Your product is built and ready to sell.</p>
         </div>
-        <h1 className="text-5xl font-extrabold mb-4 text-foreground">Your product is live!</h1>
-        <p className="text-xl text-muted-foreground">
-          Your skill has been successfully converted into a monetizable product.
-        </p>
-      </motion.div>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-12 relative z-10">
-        <Card className="border-primary/20 shadow-lg bg-card/50 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent"></div>
-          <CardContent className="p-8">
-            <h3 className="text-xl font-bold mb-2">Your Sales Page</h3>
-            <p className="text-muted-foreground text-sm mb-6">Share this link to start getting sales instantly.</p>
-            
-            <div className="bg-muted p-4 rounded-lg flex items-center justify-between mb-6 border font-mono text-sm">
-              <span className="truncate mr-4 flex-1">zniche.app/product/{createdProductId}</span>
-              <Button size="sm" variant="ghost" className="shrink-0" onClick={() => copyToClipboard(`https://zniche.app/product/${createdProductId}`)}>
+        <div className="space-y-4 mb-8">
+          <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Your sales page</p>
+              <p className="font-mono text-sm truncate">/product/{createdProductId}</p>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => copyToClipboard(`${window.location.origin}/product/${createdProductId}`, "Link copied!")}
+              >
                 <Copy className="w-4 h-4" />
               </Button>
+              <Link href={`/product/${createdProductId}`}>
+                <Button size="sm" className="rounded-full gap-1">
+                  View <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
             </div>
+          </div>
 
-            <Link href={`/product/${createdProductId}`}>
-              <Button className="w-full gap-2 text-md h-12 shadow-md">
-                View Live Page <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border shadow-md bg-card/50 relative z-10">
-          <CardContent className="p-8">
-            <h3 className="text-xl font-bold mb-2">Marketplace Listing</h3>
-            <p className="text-muted-foreground text-sm mb-6">Your product is now indexed in the global marketplace.</p>
-            
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Product Name</span>
-                <span className="font-medium text-right max-w-[200px] truncate">{finalProduct?.productName || "Loading..."}</span>
+          <div className="bg-card border border-border/50 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">Product details</p>
+              <span className="inline-flex items-center text-xs font-semibold text-neon-mint bg-neon-mint/10 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-neon-mint mr-1.5 animate-pulse" /> Live
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Name</span>
+                <span className="font-medium text-right max-w-[250px] truncate">{finalProduct?.productName || "Loading..."}</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Format</span>
+                <span className="font-medium">{finalProduct?.productFormat || "..."}</span>
+              </div>
+              <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Price</span>
-                <span className="font-bold text-accent">${finalProduct?.price || form.getValues().price}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">Status</span>
-                <span className="inline-flex items-center text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2 animate-pulse" /> Live
-                </span>
+                <span className="font-bold text-primary">${finalProduct?.price || form.getValues().price}</span>
               </div>
             </div>
+          </div>
+        </div>
 
-            <Link href="/dashboard">
-              <Button variant="outline" className="w-full h-12">
-                Go to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-border shadow-md relative z-10">
-        <CardContent className="p-8">
-          <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <ShareIcon className="w-6 h-6 text-primary" /> Social Captions
-          </h3>
-          <p className="text-muted-foreground mb-8">
-            We generated 5 optimized captions to help you promote your new product. Post them today!
-          </p>
-
-          <div className="space-y-4">
-            {finalProduct?.socialCaptions ? 
-              finalProduct.socialCaptions.split(/(?=\d+\.)/).map((caption: string, i: number) => {
+        {finalProduct?.socialCaptions && (
+          <div className="bg-card border border-border/50 rounded-2xl p-5 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <p className="text-sm font-semibold">Share your product</p>
+            </div>
+            <div className="space-y-3">
+              {finalProduct.socialCaptions.split(/(?=\d+\.)/).map((caption: string, i: number) => {
                 const text = caption.replace(/^\d+\.\s*/, '').trim();
                 if (!text) return null;
                 return (
-                  <div key={i} className="flex gap-4 p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors group">
-                    <div className="flex-1 text-sm md:text-base">{text}</div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => copyToClipboard(text)}
+                  <div key={i} className="flex gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors group">
+                    <p className="flex-1 text-sm">{text}</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8"
+                      onClick={() => copyToClipboard(text, "Caption copied!")}
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 );
-              })
-              : <div className="text-center p-8 text-muted-foreground">Loading captions...</div>
-            }
+              })}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        <div className="flex gap-3">
+          <Link href={`/product/${createdProductId}`} className="flex-1">
+            <Button className="w-full rounded-full h-12 gap-2">
+              View live page <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+          <Link href="/dashboard" className="flex-1">
+            <Button variant="outline" className="w-full rounded-full h-12">
+              Dashboard
+            </Button>
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
-}
-
-function ShareIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
-      <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-    </svg>
-  )
 }

@@ -63,7 +63,7 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold tracking-tight mb-2">Creator Dashboard</h1>
           <p className="text-muted-foreground text-lg">Welcome back, {user.firstName || user.username || 'Creator'}</p>
         </div>
-        <Button onClick={() => setLocation('/build')} className="gap-2 shadow-md">
+        <Button onClick={() => setLocation('/build')} className="gap-2 shadow-md rounded-full px-6">
           <Plus className="w-4 h-4" /> New Product
         </Button>
       </div>
@@ -179,7 +179,7 @@ export default function Dashboard() {
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
             <h3 className="text-xl font-bold mb-2">No products yet</h3>
             <p className="text-muted-foreground mb-6">Create your first product to start earning.</p>
-            <Button onClick={() => setLocation('/build')}>Start Building</Button>
+            <Button onClick={() => setLocation('/build')} className="rounded-full px-6">Start Building</Button>
           </CardContent>
         </Card>
       )}

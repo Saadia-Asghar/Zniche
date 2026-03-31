@@ -1,0 +1,237 @@
+Let me research what free APIs are available and what the latest UI trends look like to make this truly unique.Now I have everything. Let me build the complete, definitive prompt with a unique UI concept and all free APIs mapped out.Here is the complete, production-grade Replit Agent 4 prompt. Copy every word and paste it directly:
+
+---
+
+## 🚀 COMPLETE REPLIT AGENT 4 PROMPT — ZNICHE
+
+---
+
+> **Build a full-stack web application called Zniche.** Brand tagline: *"Turn what you know into what you earn."* This is a skill-to-income platform that is unlike anything currently on the market. Do NOT build a generic AI form + results page. Build a cinematic, living product experience.
+>
+> ---
+>
+> ## DESIGN SYSTEM (DO NOT DEVIATE)
+>
+> **Colors:**
+> - Primary: `#6339FF` (Deep Violet)
+> - Accent: `#00F5A0` (Neon Mint)
+> - Alert: `#FF4D6D` (Signal Red)
+> - Background Dark: `#08080F` (Abyss)
+> - Background Light: `#F0EDFF` (Ghost Haze)
+> - Card Dark: `#0E0E1A` with `border: 0.5px solid #1E1E2E`
+> - Text Primary on dark: `#FFFFFF`
+> - Text Secondary on dark: `#888` 
+> - Text Muted: `#444`
+>
+> **Typography:** Use Inter font (import from Google Fonts). Headings: weight 700, letter-spacing -0.04em. Body: weight 400, line-height 1.7. No rounded generic fonts.
+>
+> **Logo:** Letter "Z" in a `#6339FF` rounded square with a `#00F5A0` dot at bottom-right corner. SVG. Used in navbar and favicon.
+>
+> **UI Rules — CRITICAL:**
+> - Dark-first UI. The default theme is dark (`#08080F` background). Light mode is optional toggle.
+> - NO generic card grids. NO typical hero sections with a centered headline and two buttons.
+> - NO spinner loading states. Use animated skeleton shimmer in `#6339FF` opacity 10%.
+> - Progress/steps use a LEFT-SIDE VERTICAL TIMELINE (not top tabs, not numbered circles in a row).
+> - Every interactive element has a subtle `box-shadow: 0 0 0 0px #6339FF` that expands to `0 0 0 3px #6339FF40` on focus.
+> - Buttons: pill-shaped (`border-radius: 999px`), not square.
+> - Use `backdrop-filter: blur(12px)` on the navbar for a glass effect.
+> - Micro-animations: every state change (step completing, card appearing, success message) uses a 250ms ease-out transition.
+> - The marketplace uses a MASONRY layout (like Pinterest), not a boring grid.
+>
+> ---
+>
+> ## FREE APIs TO INTEGRATE (NO PAID KEYS NEEDED)
+>
+> 1. **Anthropic Claude API** — `https://api.anthropic.com/v1/messages` — model: `claude-sonnet-4-20250514` — enable the `web_search_20250305` tool for market research. Use streaming responses (`stream: true`) to show text appearing word-by-word in the UI. Store key as `ANTHROPIC_API_KEY` in Replit Secrets.
+>
+> 2. **Stripe Connect** — No monthly fee. Charges only `2.9% + $0.30` per transaction. Use `Stripe Checkout Sessions` so sellers get paid directly. Zniche takes a 5% platform fee via `application_fee_amount`. Store key as `STRIPE_SECRET_KEY` in Replit Secrets. Stripe is completely free to set up — you only pay when money moves.
+>
+> 3. **Unsplash API** — `https://api.unsplash.com/search/photos` — Free tier: 50 requests/hour, no credit card. Used to auto-fetch a beautiful hero image for each generated product page based on the skill keyword. Store key as `UNSPLASH_ACCESS_KEY`.
+>
+> 4. **Resend Email API** — `https://api.resend.com/emails` — Free tier: 3,000 emails/month. Used to send the seller a "Your product is live" email with their Stripe link and shareable page URL. Store key as `RESEND_API_KEY`.
+>
+> 5. **Replit Auth** — Built-in, completely free. Use `@replit/auth-client` for sign in/sign out. No configuration needed.
+>
+> 6. **LottieFiles CDN** — `https://unpkg.com/@lottiefiles/lottie-player` — Free. Use a success/celebration Lottie animation when a product is fully built. Use this JSON URL for the success animation: `https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json`
+>
+> 7. **REST Countries API** — `https://restcountries.com/v3.1/all` — 100% free, no key. Used in the onboarding form to auto-detect user's country and show a flag next to their profile on the marketplace.
+>
+> ---
+>
+> ## DATABASE SCHEMA (PostgreSQL + Drizzle ORM)
+>
+> ```
+> Table: users
+>   id, replit_user_id, display_name, email, country_code, 
+>   stripe_account_id, created_at
+>
+> Table: products
+>   id, user_id, skill_input, hours_per_week, price,
+>   product_name, product_description, product_format,
+>   market_research (text), sales_copy (text),
+>   unsplash_image_url, stripe_checkout_url,
+>   page_slug (unique), status (building/live/paused),
+>   total_sales, total_revenue, created_at
+>
+> Table: social_captions
+>   id, product_id, platform (twitter/linkedin/whatsapp), caption_text
+>
+> Table: marketplace_listings
+>   id, product_id, is_featured, category_tag, view_count
+>
+> Table: purchases
+>   id, product_id, buyer_email, amount, stripe_payment_id, 
+>   created_at
+> ```
+>
+> ---
+>
+> ## PAGES & ROUTES
+>
+> ### `/` — Landing Page
+> Layout: Full-screen dark hero. Left side: animated text cycling through skill examples ("Arabic tutor" → "Excel expert" → "Fitness coach" → "Home cook" → "Urdu teacher") with a typewriter effect. Right side: a live mini-preview of the build feed animating in a loop as decoration. Below: 3-step explainer (horizontal timeline on desktop, vertical on mobile). Below that: live feed of the 6 most recently created products from the marketplace. Bottom: single CTA button "Start building — it's free".
+>
+> ### `/build` — The Core Experience (protected by Replit Auth)
+>
+> **Step 1 — Skill Input Screen:**
+> - NOT a form. A full-screen conversational UI.
+> - A single large text area with placeholder: *"Describe what you're good at in one sentence..."*
+> - Below: two sliders (hours/week: 1–20, your price: $5–$500) styled with `#6339FF` track.
+> - A small pill showing country flag (auto-detected via REST Countries API).
+> - One pill-shaped button: "Build my product →"
+>
+> **Step 2 — The Build Feed (THE HERO MOMENT):**
+> - Full screen takeover. Left side: a vertical timeline with 6 steps. Right side: a live output panel where each step's AI result streams in word-by-word.
+> - Steps with their icons (use SVG inline icons, NO emoji):
+>   1. [Search icon] "Scanning market demand" — calls Claude with web_search tool
+>   2. [Lightbulb icon] "Designing your product" — calls Claude to create product concept
+>   3. [Pen icon] "Writing your sales page" — calls Claude to write full copy
+>   4. [Image icon] "Finding your cover image" — calls Unsplash API
+>   5. [Card icon] "Creating your checkout" — calls Stripe to create checkout session
+>   6. [Globe icon] "Publishing to marketplace" — saves to DB and publishes
+> - Each step: when active, the left timeline dot pulses in `#6339FF`. When complete, it fills solid `#00F5A0`.
+> - On the right panel, stream the AI text output for steps 1–3. For steps 4–6 show a clean status message.
+> - Steps run SEQUENTIALLY. Each step only starts after the previous completes.
+> - If ANY step fails: show an inline retry button for ONLY that step. Never crash the whole flow.
+>
+> **Step 3 — Celebration Screen:**
+> - Lottie animation plays (success JSON from LottieFiles CDN).
+> - Show 3 cards: [Your Live Page URL with copy button] [Your Stripe Checkout Link with copy button] [Share on social with pre-filled tweet text].
+> - Below: show the 5 generated social captions in a tabbed view (Twitter | LinkedIn | WhatsApp). Each has a one-click copy button.
+> - Button: "See your product in the marketplace →"
+>
+> ### `/p/[slug]` — Public Product Sales Page
+> - This is the shareable page every creator sends to buyers.
+> - Top: Full-width Unsplash image (blurred at edges). Overlaid: product name in large white text.
+> - Below: sales copy rendered as HTML (headline, benefits, CTA).
+> - Sticky bottom bar on mobile: "Buy now — $XX" pill button that opens Stripe Checkout.
+> - Side panel on desktop: Creator card (name, country flag, skill), price, and buy button.
+> - NO navbar, NO footer on this page — full focus on conversion.
+>
+> ### `/marketplace` — Discovery Feed
+> - Masonry layout (2 columns mobile, 3 columns tablet, 4 columns desktop).
+> - Each card: Unsplash image thumbnail, product name, skill tag (colored pill), creator name + country flag, price, "Buy now" button.
+> - Filter bar (sticky top): All | Digital guides | Live sessions | Templates | Courses
+> - Sort: Newest | Price low→high | Most viewed
+> - Search bar with instant filtering (no page reload).
+> - Infinite scroll (load 12 at a time).
+>
+> ### `/dashboard` — Creator Dashboard (protected)
+> - Overview: total revenue, total sales, products live (3 metric cards in `#0E0E1A` dark cards with `#00F5A0` numbers).
+> - Products table: name, status pill, views, sales, revenue, edit/pause/delete actions.
+> - Quick action: "Build another product" button.
+>
+> ### `/admin` — Password Protected Admin Panel
+> - Password stored in Replit Secrets as `ADMIN_PASSWORD`.
+> - Stats: total users, total products, total GMV (gross merchandise value).
+> - Table: all products with user info, status, revenue.
+> - Ability to feature/unfeature a marketplace listing.
+>
+> ---
+>
+> ## AI PROMPT LOGIC (exact prompts for each step)
+>
+> **Step 1 — Market Research (with web_search tool ON):**
+> ```
+> System: "You are a market research analyst. Be concise, factual, and data-driven."
+> User: "Search the internet and tell me: is there real demand for a person who [SKILL_INPUT]? What would people typically pay for this expertise? Find 3 specific data points (platforms, prices, or examples). Format your response as: DEMAND_LEVEL: (High/Medium/Low), KEY_INSIGHT: (one sentence), PRICE_RANGE: ($X–$Y), EVIDENCE: (3 bullet points max)."
+> ```
+>
+> **Step 2 — Product Concept:**
+> ```
+> System: "You are a product designer specializing in digital knowledge products."
+> User: "Based on: Skill: [SKILL_INPUT], Available time: [HOURS] hours/week, Target price: $[PRICE], Market research: [STEP1_RESULT]. Design ONE specific micro-product. Make it concrete and sellable. Respond ONLY in this JSON format: {\"product_name\": \"\", \"tagline\": \"\", \"format\": \"PDF guide | Live sessions | Video course | Template pack | Toolkit\", \"description\": \"\", \"what_they_get\": [\"item1\", \"item2\", \"item3\"], \"category\": \"\"}"
+> ```
+>
+> **Step 3 — Sales Copy:**
+> ```
+> System: "You are a world-class copywriter. Write punchy, human, conversion-focused copy. Never sound like AI."
+> User: "Write a complete sales page for this product: [PRODUCT_JSON]. Include: HEADLINE (bold claim, max 10 words), SUBHEADLINE (expand the promise, max 20 words), BODY (2 short paragraphs, max 60 words total, speak directly to the buyer), BENEFITS (3 bullet points starting with a strong verb), CTA_TEXT (max 5 words for the buy button). Respond ONLY in JSON: {\"headline\": \"\", \"subheadline\": \"\", \"body\": \"\", \"benefits\": [], \"cta_text\": \"\"}"
+> ```
+>
+> **Step 6 — Social Captions:**
+> ```
+> System: "You write social media copy that sounds like a real person, not a brand."
+> User: "Write 5 captions to announce this product: [PRODUCT_NAME] — [TAGLINE]. Price: $[PRICE]. Page: [PAGE_URL]. For each: Twitter (max 240 chars, casual, 1–2 hashtags), LinkedIn (professional but warm, 2 sentences), WhatsApp (friendly, feels like a message to a friend, no hashtags). Return JSON: {\"twitter\": \"\", \"linkedin\": \"\", \"whatsapp\": \"\", \"twitter2\": \"\", \"linkedin2\": \"\"}"
+> ```
+>
+> ---
+>
+> ## BACKEND ROUTES
+>
+> ```
+> POST /api/build/start        — create product record, return product_id
+> POST /api/build/research     — call Claude step 1 (streaming)
+> POST /api/build/concept      — call Claude step 2 (streaming)
+> POST /api/build/copy         — call Claude step 3 (streaming)
+> POST /api/build/image        — call Unsplash API
+> POST /api/build/checkout     — create Stripe Checkout Session
+> POST /api/build/publish      — save all to DB, send Resend email, return page URL
+> GET  /api/marketplace        — paginated products list
+> GET  /api/product/:slug      — single product page data
+> GET  /api/dashboard          — user's products and stats
+> POST /api/stripe/webhook     — handle purchase completed events
+> GET  /api/admin/stats        — admin panel data (password protected)
+> ```
+>
+> ---
+>
+> ## TECH STACK
+> - **Frontend:** React 18 + Vite + Tailwind CSS
+> - **Backend:** Node.js + Express
+> - **Database:** PostgreSQL + Drizzle ORM
+> - **Auth:** Replit Auth (`@replit/auth-client`)
+> - **AI:** Anthropic SDK with streaming
+> - **Payments:** Stripe (`stripe` npm package)
+> - **Email:** Resend (`resend` npm package)
+> - **Animation:** Lottie Player from CDN (no npm install)
+> - **Images:** Unsplash API (fetch, no SDK needed)
+> - **Font:** Inter from Google Fonts (import in index.html)
+>
+> ---
+>
+> ## IMPORTANT RULES FOR THE BUILD
+>
+> 1. Every env variable goes in Replit Secrets, never hardcoded.
+> 2. All Stripe operations happen server-side only. Never expose secret key to frontend.
+> 3. All AI calls are server-side. Frontend only receives streamed text via SSE (Server-Sent Events).
+> 4. Handle all API errors gracefully — show a human-friendly message, never a raw error.
+> 5. Mobile-first responsive — every page must work perfectly on 375px width.
+> 6. The `/p/[slug]` product page must be publicly accessible without login.
+> 7. The `/marketplace` page must be publicly accessible without login.
+> 8. Use `slugify(product_name + '-' + nanoid(6))` for the page slug.
+> 9. Product pages must have proper `<meta og:title>`, `<meta og:description>`, `<meta og:image>` (Unsplash image) for link previews when shared on WhatsApp, Twitter, LinkedIn.
+> 10. Add a `robots.txt` and `sitemap.xml` for SEO.
+
+---
+
+## After building — what to do immediately:
+
+Once the app is live on your Replit subdomain:
+
+1. Use it yourself — type *"I explain Pakistani history to English speakers"* and run the full flow
+2. Record a 60-second screen video showing the 6-step live build
+3. Post on X/LinkedIn tagging **@Replit**: *"I built a marketplace where anyone turns their skill into a product in 20 minutes — all with Agent 4, Stripe, and Anthropic. Zero code. Live now 👇 #Agent4Buildathon"*
+4. Submit the Replit project URL + video as your Week 2 checkpoint
+
+That's everything. Want me to also write the exact Stripe webhook handler code and the Resend email template HTML?

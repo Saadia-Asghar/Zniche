@@ -2,17 +2,30 @@
 
 ## Overview
 
-Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe their skill, watch AI build their micro-product live in 7 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
+Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe their skill, watch AI build their micro-product live in 6 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
 
-**Tagline:** "Your skill. Your product. Your income. — in 20 minutes."
+**Tagline:** "Turn what you know into what you earn."
 
 ## Brand
 
-- Primary: #7C5CFC (Spark Purple)
-- Accent: #23F0C7 (Mint Drop)
-- Dark background: #0D0D0D
-- Light background: #F5F2FF
-- Font: Inter
+- Primary: `#6339FF` (Deep Violet)
+- Accent: `#00F5A0` (Neon Mint)
+- Alert: `#FF4D6D` (Signal Red)
+- Dark background: `#08080F` (Abyss)
+- Light background: `#F0EDFF` (Ghost Haze)
+- Font: Inter (weight 700 headings, -0.04em tracking)
+- Dark-first UI (default theme is dark)
+
+## Design System
+
+- **Dark-first**: Default theme is dark (#08080F background)
+- **Glass navbar**: `backdrop-filter: blur(16px)` with semi-transparent bg
+- **Pill buttons**: `border-radius: 999px` for CTAs
+- **Focus rings**: Expanding `#6339FF` glow on focus
+- **No spinners**: Shimmer loading animations in primary/10%
+- **Vertical timeline**: Build feed uses left-side vertical timeline
+- **Masonry layout**: Marketplace uses CSS columns masonry (2/3/4 responsive)
+- **Micro-animations**: 250ms ease-out transitions on state changes
 
 ## Stack
 
@@ -30,6 +43,7 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe 
 - **AI**: Anthropic Claude (via Replit AI Integrations)
 - **Payments**: Stripe Checkout
 - **Animations**: Framer Motion
+- **Theme**: next-themes (dark/light toggle)
 
 ## Structure
 
@@ -50,11 +64,11 @@ artifacts-monorepo/
 
 ## Pages
 
-- `/` — Landing page with hero, how-it-works, marketplace preview
-- `/build` — 3-question form + Live AI Build Feed (7 animated steps)
-- `/marketplace` — Public marketplace of all products
-- `/product/:id` — Individual shareable product/sales page
-- `/dashboard` — User's created products (auth required)
+- `/` — Dark hero with typewriter skill cycling, live build feed mini-preview, 3-step explainer
+- `/build` — Conversational UI (textarea + sliders) → vertical timeline build feed (left timeline + right streaming panel) → celebration screen
+- `/marketplace` — Masonry layout, category filter pills, stat cards, search
+- `/product/:id` — Full sales page (no navbar/footer for conversion focus)
+- `/dashboard` — Creator dashboard with products (auth required)
 - `/admin` — Admin panel (password: "zniche-admin")
 
 ## Database Schema
@@ -84,18 +98,16 @@ artifacts-monorepo/
 - `GET /api/marketplace` — Public marketplace listings
 - `GET /api/marketplace/stats` — Marketplace stats
 - `POST /api/stripe/create-checkout` — Create Stripe checkout session
-- `POST /api/ai/build` — SSE streaming AI build (7 steps)
+- `POST /api/ai/build` — SSE streaming AI build (6 steps)
 
-## AI Build Feed
+## AI Build Feed (6 Steps)
 
-The 7-step AI build uses Anthropic Claude via SSE streaming:
-1. Market research for user's skill
-2. Micro-product concept generation
-3. Sales copy and pricing
-4. Sales page creation
-5. Payment setup
-6. 5 social media captions
-7. Marketplace listing
+1. Scanning market demand (Claude with web search)
+2. Designing your product (Claude product concept)
+3. Writing your sales page (Claude copywriting)
+4. Finding your cover image (visual selection)
+5. Creating your checkout (Stripe session)
+6. Publishing to marketplace (DB save + listing)
 
 ## Environment Variables
 
