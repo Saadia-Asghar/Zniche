@@ -1,11 +1,14 @@
 import { Link } from "wouter";
 import { motion, useInView } from "framer-motion";
-import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Zap, Globe, Banknote, Search, Lightbulb, Pen, CreditCard, Share2, CheckCircle2, Star, ChevronLeft, ChevronRight, MessageCircle, Calendar, FileText, Check, X, Shield, Rocket, Clock, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetMarketplaceListings } from "@workspace/api-client-react";
 import { ProductCover3D } from "@/components/product-cover-3d";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ParticleBackground } from "@/components/particle-background";
+import { RippleButton } from "@/components/ripple-button";
+import { SocialProofTicker } from "@/components/social-proof-ticker";
 import { useState, useEffect, useRef } from "react";
 
 const SKILL_EXAMPLES = [
@@ -95,7 +98,7 @@ function MiniBuildFeed() {
   }, []);
 
   return (
-    <div className="glass-card rounded-2xl p-5 w-full max-w-sm shadow-xl">
+    <div className="glass-card rounded-2xl p-5 w-full max-w-sm shadow-xl glow-pulse">
       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4 font-medium">Live Build Feed</p>
       <div className="space-y-3">
         {FEED_STEPS.map((step, i) => {
@@ -103,8 +106,10 @@ function MiniBuildFeed() {
           const isDone = i < activeStep;
           const isActive = i === activeStep;
           return (
-            <div
+            <motion.div
               key={i}
+              initial={false}
+              animate={isActive ? { scale: 1.02, x: 4 } : { scale: 1, x: 0 }}
               className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-300 ${
                 isActive ? "bg-primary/10 border border-primary/20" : isDone ? "opacity-80" : "opacity-40"
               }`}
@@ -119,7 +124,7 @@ function MiniBuildFeed() {
               </span>
               {isDone && <span className="ml-auto text-xs font-semibold text-neon-mint">done</span>}
               {isActive && <span className="ml-auto text-xs font-semibold text-primary">live</span>}
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -131,6 +136,8 @@ const TESTIMONIALS = [
   { name: "Sarah K.", role: "Fitness Coach", text: "Built my meal plan product in 15 minutes. Made my first sale the same day.", rating: 5 },
   { name: "Marcus T.", role: "Excel Tutor", text: "I was skeptical, but the AI nailed my sales page. Way better than I could write.", rating: 5 },
   { name: "Priya D.", role: "Designer", text: "The verification quiz was surprisingly smart. Felt like the platform actually cares about quality.", rating: 5 },
+  { name: "Alex R.", role: "Business Coach", text: "The WhatsApp integration lets me talk to clients directly. Way better than email.", rating: 5 },
+  { name: "Luna M.", role: "Language Tutor", text: "Google Calendar scheduling saved me hours. My students book sessions themselves!", rating: 5 },
 ];
 
 const fadeUp = {
@@ -223,20 +230,219 @@ function TestimonialsCarousel() {
   );
 }
 
+/* ── Why Zniche Section (Competitive Comparison) ── */
+function WhyZnicheSection() {
+  const COMPARISON = [
+    { feature: "Time to revenue", zniche: "20 minutes", others: "Days to weeks", znicheWin: true },
+    { feature: "AI skill verification", zniche: true, others: false, znicheWin: true },
+    { feature: "Built-in marketplace", zniche: true, others: false, znicheWin: true },
+    { feature: "WhatsApp messaging", zniche: true, others: false, znicheWin: true },
+    { feature: "Meeting scheduler", zniche: true, others: false, znicheWin: true },
+    { feature: "PPP pricing", zniche: true, others: false, znicheWin: true },
+    { feature: "Monthly hosting fees", zniche: false, others: true, znicheWin: true },
+    { feature: "Code/design required", zniche: false, others: true, znicheWin: true },
+  ];
+
+  return (
+    <section className="py-20 px-4 border-t border-border/30 aurora-bg relative overflow-hidden">
+      {/* Decorative blobs */}
+      <div className="absolute top-10 left-[5%] w-64 h-64 bg-primary/5 rounded-full blur-3xl morph-blob" />
+      <div className="absolute bottom-10 right-[5%] w-48 h-48 bg-accent/5 rounded-full blur-3xl morph-blob-fast" />
+      
+      <div className="container mx-auto max-w-5xl relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 bg-card/50 border border-border/50 rounded-full px-4 py-2">
+            <Rocket className="w-3 h-3 text-primary" /> Why creators choose Zniche
+          </span>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-[-0.04em] mb-4">
+            Not another <span className="gradient-text-animated">website builder</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Hostinger, Wix, and Squarespace build websites. Zniche builds your <strong className="text-foreground">business</strong> — from market research to first sale, in 20 minutes.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="glass-card rounded-2xl overflow-hidden"
+        >
+          <table className="comparison-table w-full">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="py-4 px-6">Feature</th>
+                <th className="py-4 px-6 text-center">
+                  <span className="gradient-text font-bold text-sm">Zniche</span>
+                </th>
+                <th className="py-4 px-6 text-center text-xs">Hostinger / Wix / Others</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON.map((row, i) => (
+                <motion.tr
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                >
+                  <td className="py-3 px-6 text-sm font-medium">{row.feature}</td>
+                  <td className="py-3 px-6 text-center">
+                    {typeof row.zniche === "boolean" ? (
+                      row.zniche ? (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent/10"><Check className="w-4 h-4 text-accent" /></span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-destructive/10"><X className="w-4 h-4 text-destructive" /></span>
+                      )
+                    ) : (
+                      <span className="text-sm font-semibold text-accent">{row.zniche}</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-6 text-center">
+                    {typeof row.others === "boolean" ? (
+                      row.others ? (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent/10"><Check className="w-4 h-4 text-accent" /></span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-destructive/10"><X className="w-4 h-4 text-destructive" /></span>
+                      )
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{row.others}</span>
+                    )}
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ── New Features Showcase ── */
+function FeaturesShowcase() {
+  const FEATURES = [
+    {
+      icon: MessageCircle,
+      title: "WhatsApp Client Agent",
+      desc: "Built-in WhatsApp chat on every product page. Auto-replies powered by AI. Never miss a client message.",
+      color: "from-[#25D366] to-[#128C7E]",
+      iconColor: "text-[#25D366]",
+    },
+    {
+      icon: Calendar,
+      title: "Google Calendar Meetings",
+      desc: "Let clients book sessions directly. One-click Google Calendar integration with automated scheduling.",
+      color: "from-[#4285F4] to-[#0D47A1]",
+      iconColor: "text-[#4285F4]",
+    },
+    {
+      icon: FileText,
+      title: "Meeting Notes",
+      desc: "Keep track of every client session. Write, edit, and organize meeting notes right in your dashboard.",
+      color: "from-primary to-[#8B6FFF]",
+      iconColor: "text-primary",
+    },
+    {
+      icon: Brain,
+      title: "AI Business Coach",
+      desc: "Claude-powered coaching right in your dashboard. Get advice on pricing, marketing, and growth strategies.",
+      color: "from-accent to-[#00C080]",
+      iconColor: "text-accent",
+    },
+    {
+      icon: Shield,
+      title: "Skill Verification",
+      desc: "AI-generated quiz proves your expertise. Get a verified badge that builds buyer trust.",
+      color: "from-[#FF5A70] to-[#FF8FA0]",
+      iconColor: "text-zniche-red",
+    },
+    {
+      icon: Globe,
+      title: "Global PPP Pricing",
+      desc: "Auto-detect buyer location. Adjust pricing for 30+ countries with purchasing power parity.",
+      color: "from-[#0099FF] to-[#33BBFF]",
+      iconColor: "text-blue-400",
+    },
+  ];
+
+  return (
+    <section className="py-20 px-4 border-t border-border/30 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-[100px]" />
+      
+      <div className="container mx-auto max-w-6xl relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] mb-3">
+            Everything you need. <span className="gradient-text">Nothing you don't.</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">Built-in tools that other platforms charge extra for.</p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {FEATURES.map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
+              <Card className="glass-card h-full group hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <CardContent className="pt-7 pb-6 px-6">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${feature.color} bg-opacity-10 flex items-center justify-center mb-5`}
+                    style={{ background: `linear-gradient(135deg, hsl(var(--card)), hsl(var(--card)))` }}
+                  >
+                    <feature.icon className={`w-6 h-6 ${feature.iconColor}`} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2 tracking-tight">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const { data: listings = [] } = useGetMarketplaceListings();
   const previewListings = listings.slice(0, 6);
 
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
+      {/* ── HERO SECTION with Particles ── */}
       <section className="relative pt-24 pb-16 md:pt-36 md:pb-28 overflow-hidden px-4">
+        <ParticleBackground particleCount={40} />
+        
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
-          <div className="absolute top-20 left-[10%] w-16 h-16 rounded-2xl bg-primary/10 animate-float opacity-30 rotate-12" />
-          <div className="absolute top-40 right-[15%] w-12 h-12 rounded-full bg-neon-mint/10 animate-float-alt opacity-30" />
-          <div className="absolute bottom-20 left-[20%] w-10 h-10 rounded-xl bg-zniche-red/10 animate-float opacity-20 -rotate-12" />
-          <div className="absolute top-[60%] right-[8%] w-14 h-14 rounded-lg bg-primary/8 animate-float-alt opacity-20 rotate-45" />
+          {/* Morphing blobs */}
+          <div className="absolute top-20 left-[10%] w-20 h-20 bg-primary/8 morph-blob opacity-20" />
+          <div className="absolute top-40 right-[15%] w-16 h-16 bg-neon-mint/8 morph-blob-fast opacity-20" />
+          <div className="absolute bottom-20 left-[20%] w-14 h-14 bg-zniche-red/8 morph-blob opacity-15" />
+          {/* Orbiting dots */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="w-2 h-2 rounded-full bg-primary/20 orbit" />
+            <div className="w-1.5 h-1.5 rounded-full bg-accent/20 orbit-reverse" />
+          </div>
         </div>
         <div className="container relative z-10 mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -247,7 +453,7 @@ export default function Home() {
               className="flex flex-col"
             >
               <motion.div variants={fadeUp} className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6 bg-card/50 border border-border/50 rounded-full px-4 py-2 w-fit">
-                <span className="w-2 h-2 rounded-full bg-neon-mint animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-neon-mint notification-dot" />
                 AI-powered skill monetization
               </motion.div>
 
@@ -256,7 +462,7 @@ export default function Home() {
                 className="text-4xl md:text-6xl font-extrabold tracking-[-0.04em] mb-6 leading-[1.1]"
               >
                 Turn what you know<br />
-                into what you <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">earn</span>.
+                into what you <span className="gradient-text-animated">earn</span>.
               </motion.h1>
               
               <motion.p variants={fadeUp} className="text-lg md:text-xl text-muted-foreground mb-3 max-w-lg">
@@ -269,15 +475,40 @@ export default function Home() {
               
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                 <Link href="/build">
-                  <Button size="lg" className="h-13 px-8 text-base rounded-full shadow-lg hover:shadow-primary/25 transition-all" data-testid="hero-start-building">
-                    Start building free <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  <RippleButton>
+                    <Button size="lg" className="h-13 px-8 text-base rounded-full shadow-lg hover:shadow-primary/25 transition-all magnetic-btn btn-shine" data-testid="hero-start-building">
+                      Start building free <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </RippleButton>
+                </Link>
+                <Link href="/demo">
+                  <RippleButton>
+                    <Button size="lg" variant="outline" className="h-13 px-8 text-base rounded-full magnetic-btn gap-2" data-testid="hero-watch-demo">
+                      ▶ Watch demo (90s)
+                    </Button>
+                  </RippleButton>
                 </Link>
                 <Link href="/marketplace">
-                  <Button size="lg" variant="outline" className="h-13 px-8 text-base rounded-full" data-testid="hero-view-marketplace">
-                    Browse marketplace
-                  </Button>
+                  <RippleButton>
+                    <Button size="lg" variant="ghost" className="h-13 px-6 text-base rounded-full" data-testid="hero-view-marketplace">
+                      Browse marketplace
+                    </Button>
+                  </RippleButton>
                 </Link>
+              </motion.div>
+
+              {/* V5: New feature pills */}
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-2 mt-6">
+                {[
+                  { icon: MessageCircle, label: "WhatsApp Chat", color: "text-[#25D366]" },
+                  { icon: Calendar, label: "Google Calendar", color: "text-[#4285F4]" },
+                  { icon: Brain, label: "AI Coach", color: "text-primary" },
+                ].map((pill, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-card/50 border border-border/30 rounded-full px-3 py-1.5">
+                    <pill.icon className={`w-3 h-3 ${pill.color}`} />
+                    {pill.label}
+                  </span>
+                ))}
               </motion.div>
             </motion.div>
 
@@ -293,31 +524,31 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── SOCIAL PROOF TICKER ── */}
+      <SocialProofTicker variant="bar" />
+
+      {/* ── STATS BAR ── */}
       <section className="py-4 border-t border-b border-border/30 bg-card/30">
         <div className="container mx-auto max-w-4xl px-4">
-          <div className="grid grid-cols-3 gap-8 py-4">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                <AnimatedCounter target={1200} suffix="+" />
+          <div className="grid grid-cols-4 gap-6 py-4">
+            {[
+              { label: "Products Built", target: 1200, suffix: "+" },
+              { label: "Creators", target: 500, suffix: "+" },
+              { label: "Earned", target: 45, suffix: "K+", prefix: "$" },
+              { label: "Countries", target: 30, suffix: "+" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl md:text-3xl font-extrabold text-foreground">
+                  <AnimatedCounter target={stat.target} suffix={stat.suffix} prefix={stat.prefix || ""} />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">{stat.label}</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Products Built</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                <AnimatedCounter target={500} suffix="+" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Creators</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-extrabold text-foreground">
-                $<AnimatedCounter target={45} suffix="K+" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">Earned</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* ── 3 STEPS SECTION ── */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-14">
@@ -380,6 +611,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── WHY ZNICHE (Competitive Comparison) ── */}
+      <WhyZnicheSection />
+
+      {/* ── FEATURES SHOWCASE (V5 new features) ── */}
+      <FeaturesShowcase />
+
+      {/* ── LIVE PRODUCTS ── */}
       <section className="py-20 px-4 border-t border-border/30">
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
@@ -451,8 +689,10 @@ export default function Home() {
 
       <TestimonialsCarousel />
 
-      <section className="py-20 px-4 border-t border-border/30">
-        <div className="container mx-auto max-w-3xl text-center">
+      {/* ── BOTTOM CTA ── */}
+      <section className="py-20 px-4 border-t border-border/30 relative overflow-hidden">
+        <div className="absolute inset-0 aurora-bg" />
+        <div className="container mx-auto max-w-3xl text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -464,9 +704,11 @@ export default function Home() {
               It's free to start. No credit card required. Build your first product in under 20 minutes.
             </p>
             <Link href="/build">
-              <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-lg hover:shadow-primary/25 transition-all">
-                Start building now <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <RippleButton>
+                <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-lg hover:shadow-primary/25 transition-all magnetic-btn btn-shine">
+                  Start building now <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </RippleButton>
             </Link>
           </motion.div>
         </div>

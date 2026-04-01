@@ -9,9 +9,11 @@ import { Layout } from "@/components/layout";
 
 import Home from "@/pages/home";
 import Build from "@/pages/build";
+import Demo from "@/pages/demo";
 import Marketplace from "@/pages/marketplace";
 import Product from "@/pages/product";
 import Dashboard from "@/pages/dashboard";
+import CreatorProfile from "@/pages/creator";
 import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient();
@@ -39,9 +41,11 @@ function Router() {
       <PageTransition>
         <Switch>
           <Route path="/" component={Home} />
+          <Route path="/demo" component={Demo} />
           <Route path="/build" component={Build} />
           <Route path="/marketplace" component={Marketplace} />
           <Route path="/product/:id" component={Product} />
+          <Route path="/creator/:id" component={CreatorProfile} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/admin" component={Admin} />
           <Route component={NotFound} />

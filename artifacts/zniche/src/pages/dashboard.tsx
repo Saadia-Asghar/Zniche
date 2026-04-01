@@ -8,8 +8,9 @@ import { motion, useInView } from "framer-motion";
 import {
   Package, ExternalLink, Settings, Trash2, Plus, TrendingUp, DollarSign, Eye,
   Sparkles, Globe2, Users, MessageSquare, BarChart3, Tag, Copy, Share2, Award,
-  Send, ChevronRight,
+  Send, ChevronRight, Calendar, FileText, MessageCircle,
 } from "lucide-react";
+import { MeetingNotes } from "@/components/meeting-scheduler";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +21,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { getFlagEmoji } from "@/lib/pricing";
 
-type DashTab = "overview" | "products" | "ai-coach" | "audience" | "referrals" | "settings";
+type DashTab = "overview" | "products" | "ai-coach" | "audience" | "referrals" | "meetings" | "messages" | "settings";
 
 const TABS: { id: DashTab; label: string; Icon: any }[] = [
   { id: "overview", label: "Overview", Icon: BarChart3 },
   { id: "products", label: "Products", Icon: Package },
   { id: "ai-coach", label: "AI Coach", Icon: Sparkles },
+  { id: "messages", label: "Messages", Icon: MessageCircle },
+  { id: "meetings", label: "Meetings", Icon: Calendar },
   { id: "audience", label: "Audience", Icon: Users },
   { id: "referrals", label: "Referrals", Icon: Share2 },
   { id: "settings", label: "Settings", Icon: Settings },
@@ -494,6 +497,76 @@ export default function Dashboard() {
               <Send className="w-4 h-4" /> Configure email sender
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* ── Messages Tab (WhatsApp Inbox) ── */}
+      {activeTab === "messages" && (
+        <div className="max-w-xl mx-auto space-y-5">
+          <div className="glass-card rounded-2xl p-5 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#25D366]/10 flex items-center justify-center">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+            </div>
+            <div>
+              <h3 className="font-bold">Client Messages</h3>
+              <p className="text-xs text-muted-foreground">WhatsApp-powered client communication</p>
+            </div>
+          </div>
+          <div className="glass-card rounded-2xl p-5">
+            <h4 className="font-semibold text-sm mb-3">Recent Conversations</h4>
+            {completedProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No messages yet. Messages from product pages will appear here.</p>
+            ) : (
+              <div className="space-y-3">
+                {completedProducts.slice(0, 5).map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 border border-white/5 hover:border-[#25D366]/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#25D366]/10 flex items-center justify-center text-xs font-bold text-[#25D366]">
+                        {(p.productName || "P").charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{p.productName}</p>
+                        <p className="text-xs text-muted-foreground">{p.totalSales || 0} inquiries</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">via WhatsApp</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="glass-card rounded-2xl p-5">
+            <h4 className="font-semibold text-sm mb-3">Quick Replies</h4>
+            <p className="text-xs text-muted-foreground mb-3">AI-powered auto-replies handle common questions on your product pages.</p>
+            <div className="space-y-2">
+              {["Price inquiries", "Refund policy", "Product access", "General greeting"].map((reply, i) => (
+                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5 text-xs">
+                  <span className="font-medium">{reply}</span>
+                  <span className="text-[#25D366] font-medium">Active ✓</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Meetings Tab ── */}
+      {activeTab === "meetings" && (
+        <div className="max-w-xl mx-auto space-y-5">
+          <div className="glass-card rounded-2xl p-5 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-bold">Meetings & Sessions</h3>
+              <p className="text-xs text-muted-foreground">Manage your coaching & tutoring sessions</p>
+            </div>
+          </div>
+          <div className="glass-card rounded-2xl p-5">
+            <h4 className="font-semibold text-sm mb-3">Upcoming Sessions</h4>
+            <p className="text-sm text-muted-foreground text-center py-6">Sessions booked by clients via your product pages will appear here. Clients book directly via Google Calendar.</p>
+          </div>
+          <MeetingNotes />
         </div>
       )}
 

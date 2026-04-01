@@ -16,6 +16,18 @@ Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users go throug
 - **New DB Tables**: waitlist, coupons, referrals, buyer_emails, bundles, page_views + new columns on products
 - **New API Routes**: /api/suggest-skills, /api/suggest-audiences, /api/recommend-format, /api/currency/:from/:to, /api/leaderboard, /api/marketplace/countries, /api/analytics/world-map, /api/page-view, /api/coupons/*, /api/waitlist/*, /api/referral/*, /api/audience/*, /api/ai/build/phase1, /api/ai/build/phase2
 
+## V5 Features Added
+- **One-Click Demo Mode**: `/demo` route auto-plays the entire creator flow (onboarding → quiz → build → celebration) in ~90 seconds with pre-cached responses — no signup needed
+- **AI Voice Narration**: Web Speech API narrates each build step during demo mode ("Scanning market demand...", "Skill verified!")
+- **WhatsApp Client Messaging**: Floating chat widget on product pages with AI auto-replies for buyer inquiries + Dashboard inbox
+- **Google Calendar Meeting Scheduler**: 3-step booking flow (date → time → confirm) for coaching/tutoring products + Dashboard meetings tab
+- **Meeting Notes**: CRUD interface in Dashboard for post-session documentation
+- **Social Proof Ticker**: Horizontal scrolling bar on homepage showing live platform activity (launches, sales, verifications)
+- **15+ New Animations**: Particle backgrounds, morphing blobs, orbiting elements, ripple buttons, magnetic hovers, aurora gradients, glow borders, animated gradient text
+- **Competitive Pitch Section**: "Why Zniche vs Hostinger/Wix" comparison table on homepage
+- **Feature Showcase**: 6-card features grid (WhatsApp, Calendar, Notes, AI Coach, Verification, PPP)
+- **New DB Schemas**: conversations and messages tables for WhatsApp persistence
+
 ## Brand
 
 - Primary: `#5B2EFF` (Deep Violet)
@@ -98,11 +110,12 @@ artifacts-monorepo/
 
 ## Pages
 
-- `/` — Dark hero with gradient "earn" text, typewriter skill cycling, floating CSS shapes, live build feed glass card, 3-step explainer, animated stats counter bar, testimonials section, CTA bottom section
-- `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed with circular SVG progress ring (7 steps, left timeline + right streaming panel) → celebration screen with confetti, CSS 3D cover, social sharing
+- `/` — Dark hero with gradient "earn" text, typewriter skill cycling, floating CSS shapes, live build feed glass card, social proof ticker, 3-step explainer, animated stats counter bar, "Why Zniche" competitive table, features showcase, testimonials carousel, CTA bottom section
+- `/demo` — **One-click auto-play demo** of the entire build flow with AI voice narration, typewriter output, live product preview, and confetti celebration (~90 seconds, no signup needed)
+- `/build` — Conversational UI (textarea + sliders) → skill verification quiz modal → vertical timeline build feed with circular SVG progress ring (8 steps, left timeline + right streaming panel) → celebration screen with confetti, CSS 3D cover, social sharing
 - `/marketplace` — Glass-morphism cards with grid/list toggle, CSS 3D product covers, category filter pills, stat cards, search, sort
-- `/product/:id` — Parallax hero, glass-card content area, CSS 3D cover, trust badges, FAQ accordion, reviews section, shine-effect Buy Now button (no navbar/footer for conversion focus)
-- `/dashboard` — Creator dashboard with animated stat counters, mini bar charts, glass-card product list (auth required)
+- `/product/:id` — Parallax hero, glass-card content area, CSS 3D cover, trust badges, FAQ accordion, reviews section, WhatsApp chat widget, Google Calendar booking (for coaching products), shine-effect Buy Now button (no navbar/footer for conversion focus)
+- `/dashboard` — Creator dashboard with animated stat counters, mini bar charts, glass-card product list, Messages tab (WhatsApp inbox), Meetings tab (calendar + notes) (auth required)
 - `/admin` — Admin panel (password: "zniche-admin")
 
 ## Database Schema

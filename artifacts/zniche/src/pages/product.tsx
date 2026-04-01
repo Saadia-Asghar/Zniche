@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCover3D } from "@/components/product-cover-3d";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { WhatsAppChatWidget } from "@/components/whatsapp-chat";
+import { MeetingBooking } from "@/components/meeting-scheduler";
 import { useLocation as useGeoLocation } from "@/hooks/useLocation";
 import { convertPrice, getPPPPrice, getFlagEmoji } from "@/lib/pricing";
 import { toast } from "sonner";
@@ -454,11 +456,28 @@ export default function Product() {
                     <div key={i} className="flex items-center text-xs text-muted-foreground gap-2"><b.icon className="w-3.5 h-3.5 flex-shrink-0" /> {b.text}</div>
                   ))}
                 </div>
+
+                {/* V5: Meeting Scheduler for live sessions / coaching */}
+                {(product.productFormat === "Live Sessions" || product.productFormat === "Coaching" || product.category?.toLowerCase().includes("coaching") || product.category?.toLowerCase().includes("tutoring")) && (
+                  <div className="mt-4 pt-4 border-t border-border/30">
+                    <MeetingBooking
+                      creatorName={product.creatorFirstName || "Creator"}
+                      productName={product.productName || "Session"}
+                      sessionDuration={30}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* V5: WhatsApp Chat Widget */}
+      <WhatsAppChatWidget
+        creatorName={product.creatorFirstName || "Creator"}
+        productName={product.productName || "Product"}
+      />
     </div>
   );
 }

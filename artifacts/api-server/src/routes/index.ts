@@ -12,6 +12,8 @@ import couponsRouter from "./coupons";
 import waitlistRouter from "./waitlist";
 import referralsRouter from "./referrals";
 import audienceRouter from "./audience";
+import purchasesRouter from "./purchases";
+import creatorRouter from "./creator";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use(couponsRouter);
 router.use(waitlistRouter);
 router.use(referralsRouter);
 router.use(audienceRouter);
+router.use(purchasesRouter);
+router.use(creatorRouter);
 
 export default router;

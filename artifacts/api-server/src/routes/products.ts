@@ -92,6 +92,7 @@ router.patch("/products/:id", async (req: Request, res: Response) => {
     };
     const allowed = [
       "productName",
+      "tagline",
       "productDescription",
       "productFormat",
       "category",
@@ -103,6 +104,11 @@ router.patch("/products/:id", async (req: Request, res: Response) => {
       "marketplaceListed",
       "status",
       "marketResearch",
+      "price",
+      "skill",
+      "waitlistMode",
+      "pppEnabled",
+      "unsplashImageUrl",
     ];
     for (const key of allowed) {
       if (key in req.body) {
