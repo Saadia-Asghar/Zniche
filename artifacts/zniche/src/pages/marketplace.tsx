@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, TrendingUp, Users, DollarSign, LayoutGrid, LayoutList } from "lucide-react";
+import {
+  Search, SlidersHorizontal, TrendingUp, Users, DollarSign, LayoutGrid, LayoutList, Trophy, Globe2,
+} from "lucide-react";
 import { useGetMarketplaceListings, useGetMarketplaceStats } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +13,11 @@ import { ProductCover3D } from "@/components/product-cover-3d";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Breadcrumb } from "@/components/breadcrumb";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { getFlagEmoji } from "@/lib/pricing";
 
-const CATEGORIES = ["All", "Featured", "Digital guides", "Live sessions", "Templates", "Courses", "Consulting", "Coaching"];
+const CATEGORIES = ["All", "Featured", "Tech & Software", "Writing & Content", "Design & Creative", "Business & Coaching", "Arts & Media", "Education & Tutoring", "Finance & Money", "Health & Wellness", "Food & Cooking"];
 
 function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
@@ -30,12 +29,74 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     el.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) scale(1.02)`;
   };
-  const handleMouseLeave = () => {
-    if (ref.current) ref.current.style.transform = "";
-  };
+  const handleMouseLeave = () => { if (ref.current) ref.current.style.transform = ""; };
   return (
     <div ref={ref} className={`transition-transform duration-300 ease-out ${className}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
       {children}
+    </div>
+  );
+}
+
+function Leaderboard() {
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/leaderboard").then(r => r.ok ? r.json() : []).then(setLeaders).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  if (!loading && leaders.length === 0) return null;
+
+  return (
+    <div className="mb-10">
+      <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Trophy className="w-4 h-4 text-accent" /> Top Creators</h2>
+      {loading ? (
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-40 rounded-2xl flex-shrink-0" />)}
+        </div>
+      ) : (
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {leaders.map((l, i) => (
+            <div key={i} className="flex-shrink-0 flex items-center gap-3 glass-card rounded-2xl px-4 py-3 min-w-[160px]">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm text-primary relative">
+                {(l.creatorFirstName || "?").charAt(0)}
+                {i < 3 && <span className="absolute -top-1 -right-1 text-xs">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{l.creatorFirstName || "Creator"}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  {l.creatorCountry && <span>{getFlagEmoji(l.creatorCountry)}</span>}
+                  <span className="text-[#00F0A0] font-medium">${Math.round(l.totalRevenue || 0)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CountryFilter({ value, onChange }: { value: string; onChange: (cc: string) => void }) {
+  const [countries, setCountries] = useState<{ countryCode: string; count: number }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/marketplace/countries").then(r => r.ok ? r.json() : []).then(setCountries).catch(() => {});
+  }, []);
+
+  if (countries.length === 0) return null;
+
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
+      <button onClick={() => onChange("")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex-shrink-0 ${!value ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground hover:border-primary/50"}`}>
+        <Globe2 className="w-3 h-3" /> All countries
+      </button>
+      {countries.slice(0, 8).map(c => (
+        <button key={c.countryCode} onClick={() => onChange(c.countryCode)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex-shrink-0 ${value === c.countryCode ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground hover:border-primary/50"}`}>
+          <span>{getFlagEmoji(c.countryCode || "")}</span> {c.countryCode} <span className="opacity-60">({c.count})</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -45,6 +106,7 @@ export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [countryFilter, setCountryFilter] = useState("");
 
   const { data: listings = [], isLoading } = useGetMarketplaceListings();
   const { data: stats, isLoading: isLoadingStats } = useGetMarketplaceStats();
@@ -56,62 +118,49 @@ export default function Marketplace() {
       listing.category?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All"
       || (selectedCategory === "Featured" && listing.isFeatured)
-      || (selectedCategory !== "Featured" && listing.category?.toLowerCase() === selectedCategory.toLowerCase());
-    return matchesSearch && matchesCategory;
+      || listing.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCountry = !countryFilter || (listing as any).creatorCountry === countryFilter;
+    return matchesSearch && matchesCategory && matchesCountry;
   }).sort((a, b) => {
     if (sortBy === "price-asc") return Number(a.price) - Number(b.price);
     if (sortBy === "price-desc") return Number(b.price) - Number(a.price);
+    if (sortBy === "popular") return (b.viewCount || 0) - (a.viewCount || 0);
     return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
   });
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-10">
       <Breadcrumb items={[{ label: "Marketplace" }]} />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-10"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-[-0.04em] mb-2">Marketplace</h1>
-        <p className="text-muted-foreground text-lg">Discover skills and micro-products from top creators.</p>
+        <p className="text-muted-foreground text-lg">Discover skills and micro-products from top creators worldwide.</p>
       </motion.div>
 
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-10">
         {[
           { icon: TrendingUp, label: "Products", value: stats?.totalProducts || 0, color: "text-primary bg-primary/10" },
-          { icon: Users, label: "Creators", value: stats?.totalCreators || 0, color: "text-neon-mint bg-neon-mint/10" },
+          { icon: Users, label: "Creators", value: stats?.totalCreators || 0, color: "text-[#00F0A0] bg-[#00F0A0]/10" },
           { icon: DollarSign, label: "Avg Price", value: `$${Math.round(Number(stats?.avgPrice) || 0)}`, color: "text-green-500 bg-green-500/10" },
         ].map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.1 }}
-            className="glass-card rounded-2xl p-5 flex items-center gap-4"
-          >
-            <div className={`p-3 rounded-xl ${stat.color}`}>
-              <stat.icon className="w-5 h-5" />
-            </div>
+          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }} className="glass-card rounded-2xl p-5 flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${stat.color}`}><stat.icon className="w-5 h-5" /></div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-              <div className="text-2xl font-bold">
-                {isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : stat.value}
-              </div>
+              <div className="text-2xl font-bold">{isLoadingStats ? <Skeleton className="h-7 w-12 mt-1" /> : stat.value}</div>
             </div>
           </motion.div>
         ))}
       </div>
 
+      {/* Leaderboard */}
+      <Leaderboard />
+
+      {/* Search + filters */}
       <div className="flex flex-col md:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search products..."
-            className="pl-10 h-11 rounded-full bg-card border-border/50"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Input placeholder="Search products..." className="pl-10 h-11 rounded-full bg-card border-border/50" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[160px] h-11 rounded-full bg-card border-border/50">
@@ -120,68 +169,48 @@ export default function Marketplace() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="popular">Most Viewed</SelectItem>
             <SelectItem value="price-asc">Price: Low</SelectItem>
             <SelectItem value="price-desc">Price: High</SelectItem>
           </SelectContent>
         </Select>
         <div className="hidden md:flex border border-border/50 rounded-full overflow-hidden">
-          <Button
-            variant={viewMode === "grid" ? "default" : "ghost"}
-            size="icon"
-            className="rounded-none h-11 w-11"
-            onClick={() => setViewMode("grid")}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "ghost"}
-            size="icon"
-            className="rounded-none h-11 w-11"
-            onClick={() => setViewMode("list")}
-          >
-            <LayoutList className="w-4 h-4" />
-          </Button>
+          <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="rounded-none h-11 w-11" onClick={() => setViewMode("grid")}><LayoutGrid className="w-4 h-4" /></Button>
+          <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="rounded-none h-11 w-11" onClick={() => setViewMode("list")}><LayoutList className="w-4 h-4" /></Button>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-8 flex-wrap">
+      {/* Category pills */}
+      <div className="flex gap-2 mb-4 flex-wrap">
         {CATEGORIES.map((cat) => (
-          <Button
-            key={cat}
-            variant={selectedCategory === cat ? "default" : "secondary"}
-            size="sm"
-            className="rounded-full text-xs h-8 px-4"
-            onClick={() => setSelectedCategory(cat)}
-          >
+          <Button key={cat} variant={selectedCategory === cat ? "default" : "secondary"} size="sm" className="rounded-full text-xs h-8 px-4" onClick={() => setSelectedCategory(cat)}>
             {cat}
           </Button>
         ))}
       </div>
 
+      {/* Country filter */}
+      <CountryFilter value={countryFilter} onChange={setCountryFilter} />
+
+      {/* Results count */}
+      {!isLoading && <p className="text-xs text-muted-foreground mb-5">{filtered.length} product{filtered.length !== 1 ? "s" : ""} found</p>}
+
+      {/* Grid / List */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 rounded-2xl" />
-          ))}
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2">No products found</h3>
           <p className="text-muted-foreground mb-6">Try adjusting your search or filters.</p>
-          <Link href="/build">
-            <Button className="rounded-full px-6">Create the first one</Button>
-          </Link>
+          <Link href="/build"><Button className="rounded-full px-6">Create the first one</Button></Link>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((listing, i) => (
-            <motion.div
-              key={listing.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
-            >
+            <motion.div key={listing.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
               <Link href={`/product/${listing.id}`}>
                 <TiltCard>
                   <div className={`glass-card rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 ${listing.isFeatured ? "featured-gradient-border" : ""}`}>
@@ -192,29 +221,23 @@ export default function Marketplace() {
                     )}
                     <div className="flex items-center justify-center py-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
                       <ErrorBoundary>
-                        <ProductCover3D
-                          productName={listing.productName || "Product"}
-                          category={listing.category}
-                          width={220}
-                          height={160}
-                        />
+                        <ProductCover3D productName={listing.productName || "Product"} category={listing.category} width={220} height={160} />
                       </ErrorBoundary>
                     </div>
                     <div className="p-4">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                          {listing.category || 'Skill'}
-                        </span>
+                        <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full truncate max-w-[60%]">{listing.category || "Skill"}</span>
                         <span className="font-bold">${listing.price}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                        {listing.headline || listing.productDescription || "A unique micro-product."}
-                      </p>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">
-                          {listing.creatorFirstName?.charAt(0) || "U"}
+                      <p className="font-semibold text-sm truncate mb-1">{listing.productName}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{listing.headline || listing.productDescription || "A unique micro-product."}</p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mr-1.5 text-[10px] font-bold text-primary">{listing.creatorFirstName?.charAt(0) || "U"}</div>
+                          {listing.creatorFirstName || "Creator"}
+                          {(listing as any).creatorCountry && <span className="ml-1">{getFlagEmoji((listing as any).creatorCountry)}</span>}
                         </div>
-                        {listing.creatorFirstName || "Creator"}
+                        {listing.viewCount && listing.viewCount > 0 && <span className="text-muted-foreground/60">{listing.viewCount} views</span>}
                       </div>
                     </div>
                   </div>
@@ -226,36 +249,26 @@ export default function Marketplace() {
       ) : (
         <div className="space-y-3">
           {filtered.map((listing, i) => (
-            <motion.div
-              key={listing.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.03 }}
-            >
+            <motion.div key={listing.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: i * 0.03 }}>
               <Link href={`/product/${listing.id}`}>
                 <div className="glass-card rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.005] transition-all duration-300 flex items-center gap-4 p-4">
                   <div className="flex-shrink-0">
                     <ErrorBoundary>
-                      <ProductCover3D
-                        productName={listing.productName || "Product"}
-                        category={listing.category}
-                        width={120}
-                        height={80}
-                      />
+                      <ProductCover3D productName={listing.productName || "Product"} category={listing.category} width={120} height={80} />
                     </ErrorBoundary>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                        {listing.category || 'Skill'}
-                      </span>
+                      <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">{listing.category || "Skill"}</span>
                     </div>
                     <p className="text-sm font-semibold truncate">{listing.productName}</p>
                     <p className="text-xs text-muted-foreground truncate">{listing.headline || listing.productDescription}</p>
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <p className="text-lg font-bold">${listing.price}</p>
-                    <p className="text-xs text-muted-foreground">{listing.creatorFirstName || "Creator"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(listing as any).creatorCountry && getFlagEmoji((listing as any).creatorCountry)} {listing.creatorFirstName || "Creator"}
+                    </p>
                   </div>
                 </div>
               </Link>

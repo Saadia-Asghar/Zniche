@@ -2,9 +2,19 @@
 
 ## Overview
 
-Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users describe their skill, pass a quick verification quiz, watch AI build their micro-product live in 7 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
+Zniche (zee-niche) is an AI-powered skill-to-income marketplace. Users go through a conversational 5-screen onboarding (role → skill → audience → experience → format+price), pass an in-feed skill verification quiz at step 4, watch AI build their micro-product live in 8 animated steps, and get a marketplace listing with Stripe checkout in 20 minutes.
 
 **Tagline:** "Turn what you know into what you earn."
+
+## V3/V4 Features Added
+- **Conversational Onboarding**: 5 screen tap-card flow (no forms) with slide transitions and progress dots
+- **8-Step AI Build Feed**: Phase 1 (Steps 1-3 via SSE) → Step 4 (Skill Verification Quiz inline) → Phase 2 (Steps 5-8 via SSE)
+- **Location Intelligence**: ipapi.co detection (24h cache) → Frankfurter currency conversion → PPP pricing (PPP_FACTORS for 30+ countries)
+- **Enhanced Product Page**: Location-aware pricing display, live viewer count, coupon code field, waitlist mode support
+- **Enhanced Dashboard**: Tab system (Overview, Products, AI Coach, Audience, Referrals, Settings), World Map (buyer countries as flags), Coupon Manager per product, AI Coach chat (Claude-powered), Referral system
+- **Enhanced Marketplace**: Country filter pills, leaderboard, "Most Viewed" sort, "0 products found" count
+- **New DB Tables**: waitlist, coupons, referrals, buyer_emails, bundles, page_views + new columns on products
+- **New API Routes**: /api/suggest-skills, /api/suggest-audiences, /api/recommend-format, /api/currency/:from/:to, /api/leaderboard, /api/marketplace/countries, /api/analytics/world-map, /api/page-view, /api/coupons/*, /api/waitlist/*, /api/referral/*, /api/audience/*, /api/ai/build/phase1, /api/ai/build/phase2
 
 ## Brand
 

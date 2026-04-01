@@ -1,0 +1,520 @@
+Let me research deeply what makes location-aware marketplace features genuinely useful.Now I have everything needed. Let me build the complete visual flow map and then the final prompt.Now here is the complete v4 prompt — paste this into Replit Agent 4:
+
+---
+
+## 🚀 ZNICHE V4 — FINAL COMPLETE PROMPT
+
+---
+
+> **Build Zniche v4.** Everything from the previous prompt applies PLUS all additions below. This version adds deep location intelligence, PPP-aware pricing, a real-time sales world map, timezone-aware features, and a referral system. Treat this as the definitive spec.
+>
+> ---
+>
+> ## LOCATION INTELLIGENCE SYSTEM
+>
+> ### Step 1 — Detect on every page load
+>
+> On every page (frontend), immediately on mount, call:
+> ```javascript
+> // client-side, runs on every page
+> const detectLocation = async () => {
+>   try {
+>     const res = await fetch('https://ipapi.co/json/');
+>     const data = await res.json();
+>     // data contains: country_code, country_name, currency, 
+>     // timezone, city, latitude, longitude, languages
+>     localStorage.setItem('zniche_location', JSON.stringify({
+>       countryCode: data.country_code,      // 'PK'
+>       countryName: data.country_name,      // 'Pakistan'
+>       currency: data.currency,             // 'PKR'
+>       timezone: data.timezone,             // 'Asia/Karachi'
+>       city: data.city,                     // 'Lahore'
+>       lat: data.latitude,
+>       lng: data.longitude,
+>       languages: data.languages,           // 'ur,en-PK'
+>     }));
+>   } catch { /* fail silently, use USD fallback */ }
+> };
+> ```
+> Cache in localStorage for 24 hours. Never call more than once per session.
+>
+> ### Step 2 — Live currency conversion (Frankfurter API, 100% free, no key)
+>
+> ```javascript
+> // Converts any USD amount to user's local currency
+> const convertPrice = async (usdAmount, targetCurrency) => {
+>   if (targetCurrency === 'USD') return { amount: usdAmount, symbol: '$', formatted: `$${usdAmount}` };
+>   try {
+>     const res = await fetch(
+>       `https://api.frankfurter.dev/v2/latest?base=USD&symbols=${targetCurrency}`
+>     );
+>     const data = await res.json();
+>     const rate = data.rates[targetCurrency];
+>     const converted = (usdAmount * rate).toFixed(0);
+>     const symbols = { PKR:'₨', INR:'₹', GBP:'£', EUR:'€', AUD:'A$', CAD:'C$', SAR:'﷼', AED:'د.إ', NGN:'₦', BDT:'৳', EGP:'£E', KES:'KSh', MYR:'RM', IDR:'Rp' };
+>     const sym = symbols[targetCurrency] || targetCurrency + ' ';
+>     return { amount: converted, symbol: sym, formatted: `${sym}${converted}`, rate };
+>   } catch { return { amount: usdAmount, symbol: '$', formatted: `$${usdAmount}`, rate: 1 }; }
+> };
+> ```
+>
+> Cache exchange rates for 1 hour in `localStorage.zniche_rates`.
+>
+> ### Step 3 — PPP price recommendations (hardcoded ratios, no API needed)
+>
+> ```javascript
+> // PPP adjustment factors relative to USA (1.0)
+> // Lower number = less purchasing power = suggest lower price
+> const PPP_FACTORS = {
+>   US:1.00, GB:0.92, DE:0.88, FR:0.87, AU:0.86, CA:0.85,
+>   NZ:0.82, JP:0.78, SG:0.75, AE:0.72, SA:0.68, KR:0.66,
+>   MX:0.42, BR:0.40, ZA:0.38, TH:0.35, CN:0.58, RU:0.45,
+>   TR:0.30, AR:0.25, EG:0.22, PH:0.28, VN:0.26, MY:0.38,
+>   NG:0.18, PK:0.15, BD:0.16, IN:0.20, ID:0.24, KE:0.20,
+>   GH:0.19, ET:0.12, TZ:0.14, UG:0.13
+> };
+>
+> const getPPPPrice = (usdPrice, countryCode) => {
+>   const factor = PPP_FACTORS[countryCode] || 0.60; // default for unlisted
+>   const pppPrice = Math.round(usdPrice * factor);
+>   // Round to psychologically clean number
+>   if (pppPrice < 10) return Math.round(pppPrice);
+>   if (pppPrice < 50) return Math.round(pppPrice / 5) * 5 - 1; // e.g. 14→14, 29→29
+>   return Math.round(pppPrice / 10) * 10 - 1; // e.g. 49, 99, 197
+> };
+> ```
+>
+> **Where to show PPP suggestions:**
+> - Onboarding step 5 (price slider): show 3 price suggestions:
+>   - "For buyers in your country: [LOCAL_PPP_PRICE] [LOCAL_CURRENCY]"
+>   - "For international buyers: $[USD_PRICE] USD"
+>   - "You choose: [SLIDER]"
+> - In dashboard settings: "Enable PPP pricing?" toggle — if ON, buyers from lower-PPP countries see the adjusted price automatically.
+>
+> ---
+>
+> ## IMPROVED ONBOARDING — ALL 5 QUESTIONS (FINAL SPEC)
+>
+> Each screen: full viewport, ONE question, no scrolling needed. Progress dots (5) at top. Back arrow top-left. All transitions: `translateX` slide left, 300ms ease-out.
+>
+> ### Screen 1 — Role
+> Question: *"Hey! What best describes you?"*
+> Muted subtitle: *"This helps us understand your style — takes 5 minutes total."*
+>
+> 6 tap cards (2 columns × 3 rows on mobile, 3×2 on desktop). Each card:
+> ```html
+> <div class="role-card" data-role="teacher">
+>   <!-- SVG icon 32px -->
+>   <span class="role-label">Teacher / Tutor</span>
+>   <span class="role-desc">You love explaining things clearly</span>
+> </div>
+> ```
+> Cards: Teacher/Tutor · Freelancer/Consultant · Professional/Expert · Health & Fitness · Chef & Food · Tech & Developer
+>
+> On tap: border `2px solid #5B2EFF`, scale `1.02`. Auto-advance after 350ms.
+>
+> ### Screen 2 — Skill
+> Question: *"What do people come to you for?"*
+> Muted subtitle: *"Be specific — 'Urdu calligraphy for beginners' sells better than 'art'"*
+>
+> Large textarea (no label, placeholder: *"e.g. I teach Pakistani cooking to diaspora families..."*).
+>
+> **AI autocomplete logic:** After user types 10+ characters, debounce 600ms, call Claude:
+> ```javascript
+> // Server endpoint: POST /api/suggest-skills
+> prompt: `The user typed "${input}" as their skill. 
+> They are a ${user_type} from ${country_name}.
+> Generate 4 specific, sellable skill descriptions (15-25 words each).
+> Make them outcome-focused and specific to their location/culture where relevant.
+> Return JSON: ["...", "...", "...", "..."]`
+> ```
+> Show suggestions as tappable chips below textarea. Tapping fills textarea.
+>
+> Validation: min 15 chars. Show character count. "Continue →" button appears only when valid.
+>
+> ### Screen 3 — Audience
+> Question: *"Who would benefit most from your knowledge?"*
+> Muted subtitle: *"We'll use this to write your sales page exactly for them."*
+>
+> **Claude API call fires when screen loads (with 800ms shimmer skeleton):**
+> ```javascript
+> // POST /api/suggest-audiences
+> prompt: `Skill: "${skill_description}". Creator is a ${user_type} from ${country_name}.
+> Generate 4 very specific buyer personas. Each persona should be a real person with a real 
+> problem, not a marketing segment. Include cultural/location context where relevant.
+> Return JSON: [{
+>   title: "Who they are (max 6 words)",
+>   pain: "Their specific problem (max 12 words)",
+>   context: "Why they'd pay for this (max 10 words)"
+> }]`
+> ```
+>
+> Show as 4 cards + 1 "Someone else" card. Tap selects, auto-advance.
+>
+> ### Screen 4 — Experience
+> Question: *"How long have you been doing this?"*
+> Muted subtitle: *"All levels sell — this helps us price your product fairly."*
+>
+> 4 cards with honest, warm language:
+> - "I'm still learning" → suggests $9–$19 price range
+> - "Getting more confident" → suggests $19–$47 range
+> - "Very experienced" → suggests $47–$97 range
+> - "This is my profession" → suggests $97–$297 range
+>
+> Show price range as subtle muted text on each card. Not the main message — just a hint.
+>
+> ### Screen 5 — Format + Price (AI Recommends)
+> Question: *"How should we package your knowledge?"*
+> Muted subtitle: *"AI has picked a format based on your skill and audience. You can change it."*
+>
+> **Claude API call fires when screen loads:**
+> ```javascript
+> // POST /api/recommend-format
+> prompt: `Skill: "${skill}", Audience: "${audience}", 
+> Experience: "${experience}", User type: "${user_type}", 
+> Creator country: "${country_name}".
+> Recommend the single best product format to start with and explain why in exactly 12 words.
+> Also recommend a USD price point.
+> Return JSON: {
+>   recommended: "pdf_guide|live_sessions|video_course|template_pack|toolkit",
+>   reason: "12-word explanation",
+>   price_usd: 29,
+>   formats: [
+>     {id:"pdf_guide", name:"PDF Guide", desc:"Downloadable guide they read at their own pace", time_to_create:"2-4 hours"},
+>     {id:"live_sessions", name:"Live Sessions", desc:"1-on-1 or group calls, scheduled in advance", time_to_create:"Ready now"},
+>     {id:"video_course", name:"Video Course", desc:"Pre-recorded lessons they watch anytime", time_to_create:"1-2 weeks"},
+>     {id:"template_pack", name:"Template Pack", desc:"Ready-to-use files they can copy and adapt", time_to_create:"3-6 hours"},
+>     {id:"toolkit", name:"Toolkit", desc:"Bundle of tools, checklists and resources", time_to_create:"4-8 hours"}
+>   ]
+> }`
+> ```
+>
+> Show 5 format cards. Recommended one has `border: 2px solid #5B2EFF` + "Recommended for you" pill.
+>
+> Below formats, show the price section:
+> ```
+> [Slider: $9 ←——●——→ $497]    Current: $29 USD
+>
+> What buyers pay:
+> 🇺🇸 USA: $29 USD          ← base price
+> 🇵🇰 Pakistan: ₨2,400 PKR  ← PPP adjusted (creator's country shown first if relevant)
+> 🇬🇧 UK: £23 GBP           ← Frankfurter rate
+>
+> Your earnings per sale: $27.55  (after 5% platform fee)
+> ```
+>
+> As slider moves: all 3 price lines update in real-time using `convertPrice()` and `getPPPPrice()`.
+>
+> Big pill button: "Build my product →"
+>
+> ---
+>
+> ## LOCATION-AWARE PRODUCT PAGE (`/p/[slug]`)
+>
+> When a buyer visits a product page:
+>
+> ```javascript
+> // On page load (product page)
+> useEffect(() => {
+>   const location = JSON.parse(localStorage.getItem('zniche_location') || '{}');
+>   const currency = location.currency || 'USD';
+>   const timezone = location.timezone || 'UTC';
+>
+>   // 1. Convert and display price in buyer's currency
+>   convertPrice(product.price_usd, currency).then(result => {
+>     setPriceDisplay(result.formatted);
+>     setUsdHint(`≈ $${product.price_usd} USD`);
+>   });
+>
+>   // 2. If product format is live_sessions: show times in buyer's timezone
+>   if (product.format === 'live_sessions' && product.session_slots) {
+>     const localSlots = product.session_slots.map(utcSlot => 
+>       new Date(utcSlot).toLocaleString('en', {timeZone: timezone, 
+>         weekday:'short', month:'short', day:'numeric', 
+>         hour:'2-digit', minute:'2-digit'})
+>     );
+>     setSessionSlots(localSlots);
+>   }
+>
+>   // 3. If PPP pricing is enabled by creator: apply PPP price
+>   if (product.ppp_enabled) {
+>     const pppPrice = getPPPPrice(product.price_usd, location.countryCode);
+>     convertPrice(pppPrice, currency).then(result => setPriceDisplay(result.formatted));
+>   }
+> }, []);
+> ```
+>
+> **On the product page, show:**
+> - Price in buyer's local currency (large, prominent)
+> - Small muted hint: "≈ $XX USD"
+> - Social proof strip: "Bought by people from 🇺🇸 🇬🇧 🇵🇰 🇩🇪" (from purchases table, max 4 unique country flags)
+> - If format is live_sessions: show available booking slots in buyer's local timezone with "Book a slot" CTA
+> - Trust badge: "Secure checkout · Payments processed by Stripe"
+>
+> ---
+>
+> ## REAL-TIME DASHBOARD — WORLD MAP
+>
+> In the creator dashboard Overview tab, add a Sales World Map:
+>
+> ```javascript
+> // Use a simple SVG world map approach
+> // Fetch from: https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json
+> // Use D3 to render: import * as d3 from 'd3' (CDN)
+> // import * as topojson from 'topojson-client' (CDN)
+>
+> // For each purchase, store lat/lng (from ipapi detection at purchase time)
+> // Render dots on the map at those coordinates
+> // Dot size = proportional to number of purchases from that country
+> // Dot color = #5B2EFF, pulse animation for the most recent purchase
+> // Hover tooltip: "🇵🇰 Pakistan — 3 purchases — ₨7,200 PKR"
+>
+> // Dashboard world map specs:
+> // Width: 100%, Height: 220px
+> // Dark background: #0E0E1C
+> // Country outlines: #1A1A2E (subtle)
+> // Purchase dots: #5B2EFF with 0.8 opacity, radius 4-12px based on count
+> // Most recent purchase: animated pulse ring in #00F0A0
+> ```
+>
+> Below the map: country breakdown table:
+> | Country | Flag | Sales | Revenue | % of total |
+> Each row sorts by revenue descending.
+>
+> ---
+>
+> ## REAL-TIME DASHBOARD — NEW NOTIFICATIONS SYSTEM
+>
+> Using Socket.io, emit these events from server to creator:
+>
+> ```javascript
+> // Server emits on new page view:
+> io.to(userId).emit('page_view', {
+>   country_code, country_name, city, product_id, timestamp
+> });
+>
+> // Server emits on new purchase:
+> io.to(userId).emit('new_sale', {
+>   product_name, amount_usd, buyer_currency, buyer_amount,
+>   buyer_country_code, buyer_country_name, stripe_payment_id
+> });
+> ```
+>
+> **Client notification toasts (bottom-right corner):**
+> ```javascript
+> socket.on('page_view', ({country_name, country_code}) => {
+>   showToast({
+>     type: 'view',
+>     message: `Someone from ${getFlag(country_code)} ${country_name} just viewed your product`,
+>     duration: 3000,
+>     color: '#5B2EFF'
+>   });
+> });
+>
+> socket.on('new_sale', ({product_name, buyer_amount, buyer_currency, buyer_country_name}) => {
+>   showToast({
+>     type: 'sale',
+>     message: `You earned ${buyer_currency} ${buyer_amount} from ${buyer_country_name}! 🎉`,
+>     duration: 6000,
+>     color: '#00F0A0'
+>   });
+>   smallConfetti(); // 0.5 second confetti burst
+>   // Update revenue numbers in-place without page reload
+> });
+> ```
+>
+> Toast component: fixed bottom-right, slides in from right, auto-dismiss, stacks if multiple.
+>
+> ---
+>
+> ## COUNTRY LEADERBOARD (LANDING PAGE + MARKETPLACE)
+>
+> On landing page, add a "Top creators this week" section:
+> ```javascript
+> // Backend: GET /api/leaderboard?period=week
+> // Returns: top 5 creators sorted by revenue, grouped by country
+> // Response: [{display_name, country_code, country_name, total_revenue_usd, 
+> //             product_count, skill_category, avatar_initials}]
+>
+> // Frontend: render as a horizontal scroll of creator cards
+> // Each card: initials circle (colored) + name + flag + "Earned $XX this week"
+> // Clicking a card goes to their products in marketplace
+> ```
+>
+> In marketplace filter bar, add "By country" dropdown populated from:
+> ```javascript
+> GET /api/marketplace/countries
+> // Returns all countries that have live products with product counts
+> // [{country_code, country_name, count}]
+> // Shows as: "🇵🇰 Pakistan (47)" in dropdown
+> ```
+>
+> ---
+>
+> ## TIMEZONE-AWARE LIVE SESSIONS
+>
+> When product format is `live_sessions`:
+>
+> **Creator side (dashboard → edit product):**
+> - Add "Available slots" section
+> - Calendar UI (simple 7-day view) where creator clicks to add available time slots
+> - All slots stored in UTC in DB (`session_slots` JSONB array)
+> - Creator's timezone detected and shown: "All times shown in Asia/Karachi (PKT)"
+>
+> **Buyer side (product page):**
+> - Available slots converted to buyer's timezone dynamically
+> - Show: "Tuesday, Apr 8 · 3:00 PM your time (GMT+5)"
+> - "Book this slot" button → opens Stripe Checkout with session date in metadata
+> - After purchase: Resend email to both creator AND buyer with confirmed slot in their respective timezones
+>
+> ---
+>
+> ## COUPON CODE SYSTEM
+>
+> **Dashboard → Products → Coupons tab:**
+> ```javascript
+> // Creator can create coupon codes
+> // POST /api/coupons/create
+> // Body: {product_id, code, discount_type: 'percent'|'fixed', discount_value, 
+> //        max_uses, expires_at}
+>
+> // On product page: "Have a coupon code?" collapsible field
+> // POST /api/coupons/apply → {valid, discount_amount, final_price}
+> // If valid: update displayed price, pass coupon_id to Stripe via metadata
+> ```
+>
+> Show active coupons in dashboard table: code · discount · uses/max · expires · status.
+>
+> ---
+>
+> ## WAITLIST MODE (PRE-LAUNCH)
+>
+> **Toggle in product settings:** "Coming Soon mode"
+>
+> When ON:
+> - Product page shows "Coming soon" instead of buy button
+> - Email input field: "Join the waitlist — be first to know"
+> - Stores emails in `waitlist` table (product_id, email, country_code, created_at)
+> - When creator turns OFF coming-soon mode: Resend sends launch email to all waitlist signups
+> - Dashboard shows: "47 people waiting for your product 🔥"
+>
+> ---
+>
+> ## REFERRAL SYSTEM
+>
+> **How it works:**
+> - Every creator gets a referral link: `zniche.repl.co/r/[user_id]`
+> - When someone signs up via referral link and makes their first sale: referrer earns 10% of Zniche's platform fee (not the creator's revenue) from that person's first 10 sales
+> - Stored in `referrals` table: referrer_id, referred_id, total_earned
+>
+> **Dashboard → Referrals tab:**
+> - "Your referral link" with copy button
+> - Share on WhatsApp / LinkedIn / Twitter
+> - Table: referred users + their sales + your earnings from each
+> - Total referral earnings card
+>
+> ---
+>
+> ## EMAIL BUILDER (CREATOR OWNS BUYER LIST)
+>
+> After each purchase, buyer email is stored in `buyer_emails` (product_id, email, name, country_code, purchase_date).
+>
+> **Dashboard → Audience tab:**
+> - List of all buyers with country flags
+> - "Export CSV" button (downloads email list)
+> - "Send update email" button → simple compose UI:
+>   - Subject line input
+>   - Body textarea
+>   - Preview as buyer sees it
+>   - "Send to all [N] buyers" → uses Resend to send to all buyer emails
+>
+> This is genuinely valuable — creator owns their audience, not Zniche.
+>
+> ---
+>
+> ## PRODUCT BUNDLE BUILDER
+>
+> **Dashboard → Products → "Create Bundle":**
+> - Select 2–4 existing products to bundle
+> - Set bundle name + bundle price (auto-suggested: 70% of individual sum)
+> - Bundle gets its own product page and Stripe checkout
+> - Shows: "Normally $XX total — get the bundle for $YY" with savings badge
+>
+> ---
+>
+> ## DATABASE ADDITIONS (additions to previous schema)
+>
+> ```sql
+> -- Add to products table:
+> ppp_enabled BOOLEAN DEFAULT false,
+> waitlist_mode BOOLEAN DEFAULT false,
+> session_slots JSONB DEFAULT '[]',
+>
+> -- New tables:
+> waitlist: id, product_id, email, country_code, created_at
+>
+> coupons: id, product_id, code, discount_type, discount_value, 
+>          max_uses, used_count, expires_at, is_active, created_at
+>
+> referrals: id, referrer_user_id, referred_user_id, 
+>            total_earned_usd, created_at
+>
+> buyer_emails: id, product_id, user_id (nullable), email, 
+>               first_name, country_code, purchase_date
+>
+> bundles: id, creator_user_id, bundle_name, product_ids JSONB,
+>          price_usd, stripe_checkout_url, page_slug, created_at
+>
+> page_views: id, product_id, viewer_ip_hash (not full IP), 
+>             country_code, city, timestamp
+>             -- Used for world map and analytics
+>             -- NEVER store full IP - only hash for privacy
+> ```
+>
+> ---
+>
+> ## BACKEND ROUTE ADDITIONS
+>
+> ```
+> POST /api/suggest-skills          → Claude autocomplete for onboarding step 2
+> POST /api/suggest-audiences       → Claude personas for onboarding step 3
+> POST /api/recommend-format        → Claude format + price recommendation
+> GET  /api/currency/:from/:to      → Frankfurter currency conversion (cached 1hr)
+> GET  /api/leaderboard             → Top creators by country, week/month
+> GET  /api/marketplace/countries   → Countries with product counts
+> POST /api/coupons/create          → Create coupon code
+> POST /api/coupons/apply           → Validate and apply coupon
+> POST /api/waitlist/join           → Add email to product waitlist
+> POST /api/waitlist/launch         → Send launch emails to all waitlist
+> POST /api/bundles/create          → Create product bundle
+> GET  /api/referral/:user_id       → Referral stats
+> POST /api/audience/send-email     → Send email to all buyers of a product
+> GET  /api/analytics/world-map     → Purchase lat/lng data for world map
+> ```
+>
+> ---
+>
+> ## FINAL QUALITY CHECKLIST
+>
+> Before considering the build complete, verify every item:
+>
+> - [ ] Currency converts correctly on product page for at least: USD, GBP, EUR, PKR, INR
+> - [ ] PPP prices show in onboarding step 5 slider
+> - [ ] World map renders with at least the creator's own country dot
+> - [ ] Socket.io shows view toast on product page visit
+> - [ ] Socket.io shows sale toast and confetti on purchase
+> - [ ] Country filter works in marketplace
+> - [ ] Coupon code reduces price correctly on product page
+> - [ ] Waitlist email collected and stored
+> - [ ] Referral link generates and tracks
+> - [ ] Live session times show in correct timezone on product page
+> - [ ] Delivery email sends within 5 seconds of Stripe webhook
+> - [ ] LinkedIn OAuth post works if token is stored
+> - [ ] WhatsApp deep link opens with pre-filled message
+> - [ ] Dark/light mode toggle persists across refreshes
+> - [ ] All Three.js canvases pause when off-screen
+> - [ ] Mobile layout works at 375px on all pages
+
+---
+
+This is the complete, final v4. Every question is now practical and market-relevant. Every location feature is real, free, and technically sound. The PPP system means a creator in Pakistan can price for local buyers without pricing out international ones. The world map makes dashboard data feel alive. The referral and email builder give creators real ownership of their business beyond Zniche.
